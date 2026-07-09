@@ -1,0 +1,7 @@
+{
+  "app.title": "TrackerTV",
+  "app.subtitle": "Il tuo tracker di serie TV e film",
+  "backend.status.ok": "Backend connesso (status: {{status}})",
+  "backend.status.error": "Impossibile contattare il backend",
+  "backend.status.loading": "Verifica della connessione al backend..."
+}
