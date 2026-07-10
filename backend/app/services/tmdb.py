@@ -1,15 +1,24 @@
-"""Camada de acesso à API do TMDB.
+"""Camada de acesso à API do TMDB, com cache no Postgres.
 
 A chave (TMDB_API_KEY) só existe aqui, no servidor — nunca é enviada ao
 frontend. Todo endpoint do TMDB é chamado a partir daqui, nunca direto
 do browser do usuário.
+
+Cache: respostas já mapeadas (não o payload cru do TMDB) são guardadas em
+`tmdb_cache`, com TTL por tipo de consulta. Dados de descoberta/populares
+mudam pouco, então cacheamos por mais tempo; busca por texto e detalhe
+têm TTLs próprios. Se a escrita no cache falhar por qualquer motivo, isso
+nunca deve derrubar a resposta real ao usuário — só registra e segue.
 """
+from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
 import httpx
-from fastapi import HTTPException, status
+from fastapi import status
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.models.tmdb_cache import TmdbCache
 
 MediaType = Literal["movie", "tv"]
 
@@ -24,11 +33,10 @@ DISCOVER_ENDPOINTS: dict[str, tuple[str, MediaType]] = {
     "on_the_air": ("/tv/on_the_air", "tv"),
 }
 
-
-def _image_url(path: str | None, base: str = IMAGE_BASE_URL) -> str | None:
-    if not path:
-        return None
-    return f"{base}{path}"
+TTL_DISCOVER = timedelta(hours=6)
+TTL_SEARCH = timedelta(hours=3)
+TTL_DETAIL = timedelta(hours=24)
+TTL_PROVIDERS = timedelta(hours=12)
 
 
 class TMDBError(Exception):
@@ -38,12 +46,42 @@ class TMDBError(Exception):
         super().__init__(message)
 
 
+def _image_url(path: str | None, base: str = IMAGE_BASE_URL) -> str | None:
+    if not path:
+        return None
+    return f"{base}{path}"
+
+
+def _get_cached(db: Session, key: str, ttl: timedelta) -> dict[str, Any] | None:
+    try:
+        row = db.get(TmdbCache, key)
+    except Exception:
+        return None
+    if row is None:
+        return None
+    age = datetime.now(timezone.utc) - row.cached_at
+    if age > ttl:
+        return None
+    return row.payload
+
+
+def _set_cache(db: Session, key: str, payload: dict[str, Any]) -> None:
+    try:
+        row = db.get(TmdbCache, key)
+        if row is None:
+            db.add(TmdbCache(cache_key=key, payload=payload))
+        else:
+            row.payload = payload
+            row.cached_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception:
+        # cache é um bônus de performance, nunca motivo pra quebrar a resposta real
+        db.rollback()
+
+
 async def _get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     if not settings.tmdb_api_key:
-        raise TMDBError(
-            status.HTTP_503_SERVICE_UNAVAILABLE,
-            "TMDB_API_KEY não configurada no servidor",
-        )
+        raise TMDBError(status.HTTP_503_SERVICE_UNAVAILABLE, "TMDB_API_KEY não configurada no servidor")
 
     query = {"api_key": settings.tmdb_api_key, "language": "pt-BR", **(params or {})}
     url = f"{settings.tmdb_api_base_url}{path}"
@@ -84,43 +122,59 @@ def _is_exact_title_match(raw: dict[str, Any], query: str) -> bool:
     return any(c and c.strip().casefold() == q for c in candidates)
 
 
-async def search(query: str, page: int = 1) -> dict[str, Any]:
+async def search(db: Session, query: str, page: int = 1) -> dict[str, Any]:
+    cache_key = f"search:{query.strip().casefold()}:{page}"
+    cached = _get_cached(db, cache_key, TTL_SEARCH)
+    if cached is not None:
+        return cached
+
     async def _search_in(language: str | None) -> dict[str, Any]:
         params: dict[str, Any] = {"query": query, "page": page, "include_adult": "false"}
         if language:
             params["language"] = language
         return await _get("/search/multi", params)
 
-    # Busca padrão em PT-BR.
     data = await _search_in(None)
     raw_results = [r for r in data.get("results", []) if r.get("media_type") in ("movie", "tv")]
 
-    # Se não achou nada, o usuário pode ter digitado o título original
-    # (inglês, italiano etc.) — tenta de novo em inglês antes de desistir.
     if not raw_results:
         data = await _search_in("en-US")
         raw_results = [r for r in data.get("results", []) if r.get("media_type") in ("movie", "tv")]
 
-    # Correspondência exata de título (traduzido ou original) sobe pro topo,
-    # já que a relevância do TMDB às vezes enterra o resultado óbvio.
     raw_results.sort(key=lambda item: 0 if _is_exact_title_match(item, query) else 1)
-
     results = [_map_summary(item, item["media_type"]) for item in raw_results]
-    return {"page": data.get("page", 1), "total_pages": data.get("total_pages", 1), "results": results}
+    result = {"page": data.get("page", 1), "total_pages": data.get("total_pages", 1), "results": results}
+
+    _set_cache(db, cache_key, result)
+    return result
 
 
-async def discover(category: str, page: int = 1) -> dict[str, Any]:
+async def discover(db: Session, category: str, page: int = 1) -> dict[str, Any]:
     if category not in DISCOVER_ENDPOINTS:
         raise TMDBError(status.HTTP_400_BAD_REQUEST, f"Categoria inválida: {category}")
+
+    cache_key = f"discover:{category}:{page}"
+    cached = _get_cached(db, cache_key, TTL_DISCOVER)
+    if cached is not None:
+        return cached
+
     path, media_type = DISCOVER_ENDPOINTS[category]
     data = await _get(path, {"page": page})
     results = [_map_summary(item, media_type) for item in data.get("results", [])]
-    return {"page": data.get("page", 1), "total_pages": data.get("total_pages", 1), "results": results}
+    result = {"page": data.get("page", 1), "total_pages": data.get("total_pages", 1), "results": results}
+
+    _set_cache(db, cache_key, result)
+    return result
 
 
-async def get_detail(media_type: MediaType, tmdb_id: int) -> dict[str, Any]:
+async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[str, Any]:
     if media_type not in ("movie", "tv"):
         raise TMDBError(status.HTTP_400_BAD_REQUEST, "media_type deve ser 'movie' ou 'tv'")
+
+    cache_key = f"detail:{media_type}:{tmdb_id}"
+    cached = _get_cached(db, cache_key, TTL_DETAIL)
+    if cached is not None:
+        return cached
 
     data = await _get(f"/{media_type}/{tmdb_id}")
     summary = _map_summary({**data, "id": data["id"]}, media_type)
@@ -132,7 +186,7 @@ async def get_detail(media_type: MediaType, tmdb_id: int) -> dict[str, Any]:
         episode_runtimes = data.get("episode_run_time") or []
         runtime = episode_runtimes[0] if episode_runtimes else None
 
-    return {
+    result = {
         **summary,
         "backdrop_url": _image_url(data.get("backdrop_path"), BACKDROP_BASE_URL),
         "genres": [g["name"] for g in data.get("genres", [])],
@@ -141,27 +195,35 @@ async def get_detail(media_type: MediaType, tmdb_id: int) -> dict[str, Any]:
         "status": data.get("status"),
     }
 
+    _set_cache(db, cache_key, result)
+    return result
 
-async def get_watch_providers(media_type: MediaType, tmdb_id: int, region: str = "BR") -> dict[str, Any]:
+
+async def get_watch_providers(db: Session, media_type: MediaType, tmdb_id: int, region: str = "BR") -> dict[str, Any]:
     if media_type not in ("movie", "tv"):
         raise TMDBError(status.HTTP_400_BAD_REQUEST, "media_type deve ser 'movie' ou 'tv'")
+
+    cache_key = f"providers:{media_type}:{tmdb_id}:{region.upper()}"
+    cached = _get_cached(db, cache_key, TTL_PROVIDERS)
+    if cached is not None:
+        return cached
 
     data = await _get(f"/{media_type}/{tmdb_id}/watch/providers")
     region_data = data.get("results", {}).get(region.upper(), {})
 
     def _providers(key: str) -> list[dict[str, Any]]:
         return [
-            {
-                "provider_name": p["provider_name"],
-                "logo_url": _image_url(p.get("logo_path"), "https://image.tmdb.org/t/p/w92"),
-            }
+            {"provider_name": p["provider_name"], "logo_url": _image_url(p.get("logo_path"), "https://image.tmdb.org/t/p/w92")}
             for p in region_data.get(key, [])
         ]
 
-    return {
+    result = {
         "region": region.upper(),
         "link": region_data.get("link"),
         "flatrate": _providers("flatrate"),
         "rent": _providers("rent"),
         "buy": _providers("buy"),
     }
+
+    _set_cache(db, cache_key, result)
+    return result

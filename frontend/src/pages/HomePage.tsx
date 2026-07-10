@@ -1,15 +1,19 @@
-import { useState, type FormEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { MediaCard } from "../components/MediaCard";
-import { DISCOVER_CATEGORIES, discoverMedia, searchMedia } from "../lib/media";
+import { DISCOVER_CATEGORIES, discoverMedia, searchMedia, type MediaSummary } from "../lib/media";
 
 const LANGUAGES = [
   { code: "pt", label: "PT" },
   { code: "en", label: "EN" },
   { code: "it", label: "IT" },
 ];
+
+// Lista não muda a cada segundo — evita refetch/erro toda vez que o usuário
+// troca de aba do navegador e reduz a chance de esbarrar em rate limit do TMDB.
+const LIST_STALE_TIME = 5 * 60 * 1000;
 
 export function HomePage() {
   const { i18n } = useTranslation();
@@ -18,20 +22,66 @@ export function HomePage() {
   const [category, setCategory] = useState<string>(DISCOVER_CATEGORIES[0].value);
   const [searchInput, setSearchInput] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
-
   const isSearching = activeQuery.trim().length > 0;
 
-  const discoverQuery = useQuery({
+  const discoverQuery = useInfiniteQuery({
     queryKey: ["discover", category],
-    queryFn: () => discoverMedia(category),
+    queryFn: ({ pageParam }) => discoverMedia(category, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined),
     enabled: !isSearching,
+    staleTime: LIST_STALE_TIME,
+    refetchOnWindowFocus: false,
   });
 
-  const searchQuery = useQuery({
+  const searchQuery = useInfiniteQuery({
     queryKey: ["search", activeQuery],
-    queryFn: () => searchMedia(activeQuery),
+    queryFn: ({ pageParam }) => searchMedia(activeQuery, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined),
     enabled: isSearching,
+    staleTime: LIST_STALE_TIME,
+    refetchOnWindowFocus: false,
   });
+
+  const active = isSearching ? searchQuery : discoverQuery;
+
+  // Achata as páginas acumuladas num array só, removendo duplicatas (defensivo
+  // caso o TMDB repita algum item entre páginas).
+  const results = useMemo<MediaSummary[]>(() => {
+    const pages = active.data?.pages ?? [];
+    const seen = new Set<string>();
+    const items: MediaSummary[] = [];
+    for (const page of pages) {
+      for (const item of page.results) {
+        const key = `${item.media_type}-${item.tmdb_id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          items.push(item);
+        }
+      }
+    }
+    return items;
+  }, [active.data]);
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && active.hasNextPage && !active.isFetchingNextPage) {
+          active.fetchNextPage();
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active.hasNextPage, active.isFetchingNextPage, active.fetchNextPage, category, activeQuery]);
 
   function handleSearchSubmit(e: FormEvent) {
     e.preventDefault();
@@ -43,7 +93,12 @@ export function HomePage() {
     setActiveQuery("");
   }
 
-  const activeResult = isSearching ? searchQuery : discoverQuery;
+  // Só mostra "carregando"/"erro" quando ainda não há nenhum resultado na
+  // tela — se já tem itens (mesmo de uma página anterior), a falha de uma
+  // tentativa de refetch em segundo plano não deve sumir com o que já
+  // funcionou nem exibir um aviso alarmante por cima da lista boa.
+  const showInitialLoading = active.isLoading && results.length === 0;
+  const showInitialError = active.isError && results.length === 0;
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -58,18 +113,11 @@ export function HomePage() {
             placeholder="Buscar filmes ou séries..."
             className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
           />
-          <button
-            type="submit"
-            className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium"
-          >
+          <button type="submit" className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium">
             Buscar
           </button>
           {isSearching && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:border-neutral-500"
-            >
+            <button type="button" onClick={clearSearch} className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:border-neutral-500">
               Limpar
             </button>
           )}
@@ -82,9 +130,7 @@ export function HomePage() {
                 key={lang.code}
                 onClick={() => i18n.changeLanguage(lang.code)}
                 className={`px-2 py-1 rounded-md text-xs border ${
-                  i18n.resolvedLanguage === lang.code
-                    ? "bg-purple-600 border-purple-500"
-                    : "border-neutral-700 hover:border-neutral-500"
+                  i18n.resolvedLanguage === lang.code ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                 }`}
               >
                 {lang.label}
@@ -92,10 +138,7 @@ export function HomePage() {
             ))}
           </div>
           {user && <span className="text-sm text-neutral-400 hidden sm:inline">{user.username}</span>}
-          <button
-            onClick={() => logout()}
-            className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm"
-          >
+          <button onClick={() => logout()} className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm">
             Sair
           </button>
         </div>
@@ -109,9 +152,7 @@ export function HomePage() {
                 key={cat.value}
                 onClick={() => setCategory(cat.value)}
                 className={`whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${
-                  category === cat.value
-                    ? "bg-purple-600 border-purple-500"
-                    : "border-neutral-700 hover:border-neutral-500"
+                  category === cat.value ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                 }`}
               >
                 {cat.label}
@@ -120,32 +161,35 @@ export function HomePage() {
           </div>
         )}
 
-        {isSearching && (
-          <p className="text-sm text-neutral-400 mb-4">
-            Resultados para "{activeQuery}"
-          </p>
-        )}
+        {isSearching && <p className="text-sm text-neutral-400 mb-4">Resultados para "{activeQuery}"</p>}
 
-        {activeResult.isLoading && (
-          <p className="text-neutral-400 text-sm">Carregando...</p>
-        )}
+        {showInitialLoading && <p className="text-neutral-400 text-sm">Carregando...</p>}
 
-        {activeResult.isError && (
+        {showInitialError && (
           <p className="text-red-400 text-sm">
-            Não foi possível carregar. Confira se a TMDB_API_KEY está configurada no backend.
+            Não foi possível carregar. Tenta de novo em alguns segundos (pode ser instabilidade momentânea do TMDB).
           </p>
         )}
 
-        {activeResult.data && activeResult.data.results.length === 0 && (
+        {!showInitialLoading && !showInitialError && results.length === 0 && (
           <p className="text-neutral-400 text-sm">Nada encontrado.</p>
         )}
 
-        {activeResult.data && activeResult.data.results.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {activeResult.data.results.map((item) => (
-              <MediaCard key={`${item.media_type}-${item.tmdb_id}`} item={item} />
-            ))}
-          </div>
+        {results.length > 0 && (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {results.map((item) => (
+                <MediaCard key={`${item.media_type}-${item.tmdb_id}`} item={item} />
+              ))}
+            </div>
+
+            <div ref={sentinelRef} className="h-12 flex items-center justify-center mt-6">
+              {active.isFetchingNextPage && <span className="text-xs text-neutral-500">Carregando mais...</span>}
+              {!active.hasNextPage && !active.isFetchingNextPage && (
+                <span className="text-xs text-neutral-600">Fim dos resultados.</span>
+              )}
+            </div>
+          </>
         )}
       </main>
 
