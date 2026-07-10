@@ -8,9 +8,9 @@ from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 
-# importar aqui todos os models pra que Base.metadata "enxergue" as tabelas
-# ao rodar `alembic revision --autogenerate`. Ex.: from app.models.user import User
-# (nenhum model ainda na Fase 1.0 — isso entra na Fase 1.1)
+# Importa todos os models pra que Base.metadata "enxergue" as tabelas
+# ao rodar `alembic revision --autogenerate`.
+from app.models.user import User  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -67,4 +67,19 @@ def run_migrations_online() -> None:
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
-        poo
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()

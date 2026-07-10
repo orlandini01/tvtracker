@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
-from app.api.routes import router
+from app.api.auth import limiter, router as auth_router
+from app.api.routes import router as health_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -9,6 +12,9 @@ app = FastAPI(
     version="0.1.0",
     description="Backend do tracker de séries/filmes estilo TV Time.",
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS: lista explícita de origem, nunca "*" — mesmo em dev.
 app.add_middleware(
@@ -19,4 +25,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(health_router)
+app.include_router(auth_router)
