@@ -4,20 +4,16 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.auth import limiter, router as auth_router
+from app.api.library import router as library_router
 from app.api.media import router as media_router
 from app.api.routes import router as health_router
 from app.core.config import settings
 
-app = FastAPI(
-    title="TrackerTV API",
-    version="0.1.0",
-    description="Backend do tracker de séries/filmes estilo TV Time.",
-)
+app = FastAPI(title="TrackerTV API", version="0.1.0", description="Backend do tracker de séries/filmes estilo TV Time.")
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS: lista explícita de origem, nunca "*" — mesmo em dev.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -29,3 +25,4 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(media_router)
+app.include_router(library_router)

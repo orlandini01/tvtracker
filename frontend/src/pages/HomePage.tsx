@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { MediaCard } from "../components/MediaCard";
 import { DISCOVER_CATEGORIES, discoverMedia, searchMedia, type MediaSummary } from "../lib/media";
@@ -137,6 +138,9 @@ export function HomePage() {
               </button>
             ))}
           </div>
+          <Link to="/minha-lista" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+            Minha lista
+          </Link>
           {user && <span className="text-sm text-neutral-400 hidden sm:inline">{user.username}</span>}
           <button onClick={() => logout()} className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm">
             Sair
