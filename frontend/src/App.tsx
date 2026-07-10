@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { MediaDetailPage } from "./pages/MediaDetailPage";
 import { SignupPage } from "./pages/SignupPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
@@ -14,6 +15,14 @@ function App() {
         element={
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/media/:mediaType/:tmdbId"
+        element={
+          <ProtectedRoute>
+            <MediaDetailPage />
           </ProtectedRoute>
         }
       />

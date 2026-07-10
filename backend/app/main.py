@@ -4,6 +4,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.auth import limiter, router as auth_router
+from app.api.media import router as media_router
 from app.api.routes import router as health_router
 from app.core.config import settings
 
@@ -27,3 +28,4 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(auth_router)
+app.include_router(media_router)
