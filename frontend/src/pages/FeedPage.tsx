@@ -15,6 +15,8 @@ function describeActivity(activity: Activity): string {
     }
     case "rated":
       return `${who} deu nota ${activity.detail} para`;
+    case "commented":
+      return `${who} comentou em`;
     default:
       return `${who} atualizou`;
   }
@@ -76,12 +78,17 @@ export function FeedPage() {
                       <img src={activity.media.poster_url} alt={activity.media.title} className="w-full h-full object-cover" />
                     ) : null}
                   </Link>
-                  <p className="text-sm">
-                    <span className="text-neutral-300">{describeActivity(activity)}</span>{" "}
-                    <Link to={`/media/${activity.media.media_type}/${activity.media.tmdb_id}`} className="font-medium text-purple-400 hover:underline">
-                      {activity.media.title}
-                    </Link>
-                  </p>
+                  <div className="text-sm">
+                    <p>
+                      <span className="text-neutral-300">{describeActivity(activity)}</span>{" "}
+                      <Link to={`/media/${activity.media.media_type}/${activity.media.tmdb_id}`} className="font-medium text-purple-400 hover:underline">
+                        {activity.media.title}
+                      </Link>
+                    </p>
+                    {activity.action === "commented" && activity.detail && (
+                      <p className="text-neutral-500 italic mt-1">"{activity.detail}"</p>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

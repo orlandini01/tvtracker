@@ -11,6 +11,7 @@ from app.models.media import Media
 from app.models.user_media_status import UserMediaStatus
 from app.models.friendship import Friendship
 from app.models.activity import Activity
+from app.models.comment import Comment
 
 config = context.config
 if config.config_file_name is not None:

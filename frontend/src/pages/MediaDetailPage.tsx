@@ -1,3 +1,4 @@
+import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { getMediaDetail, getWatchProviders, type MediaType } from "../lib/media";
@@ -9,6 +10,7 @@ import {
   type LibraryEntryUpdate,
   type WatchStatus,
 } from "../lib/library";
+import { deleteComment, getComments, postComment } from "../lib/comments";
 
 const STATUS_OPTIONS: WatchStatus[] = ["quero_assistir", "assistindo", "assistido", "abandonei"];
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -55,6 +57,37 @@ export function MediaDetailPage() {
     },
   });
 
+  const [commentInput, setCommentInput] = useState("");
+
+  const commentsQuery = useQuery({
+    queryKey: ["comments", type, id],
+    queryFn: () => getComments(type, id),
+    enabled,
+  });
+
+  const postCommentMutation = useMutation({
+    mutationFn: (body: string) => postComment(type, id, body),
+    onSuccess: () => {
+      setCommentInput("");
+      queryClient.invalidateQueries({ queryKey: ["comments", type, id] });
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) => deleteComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", type, id] });
+    },
+  });
+
+  function handleCommentSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = commentInput.trim();
+    if (!trimmed) return;
+    postCommentMutation.mutate(trimmed);
+  }
+
   if (detailQuery.isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">Carregando...</div>;
   }
@@ -81,7 +114,6 @@ export function MediaDetailPage() {
   }
 
   function setStatus(status: WatchStatus) {
-    // clicar de novo no mesmo status ativo remove o status (mas mantem favorito/nota)
     upsertMutation.mutate({ status: entry?.status === status ? null : status });
   }
 
@@ -198,6 +230,53 @@ export function MediaDetailPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="mt-8">
+            <h2 className="text-sm font-medium text-neutral-400 mb-2">Comentários</h2>
+            <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-4">
+              <input
+                type="text"
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                placeholder="Escreva um comentário..."
+                maxLength={1000}
+                className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
+              />
+              <button
+                type="submit"
+                disabled={postCommentMutation.isPending || !commentInput.trim()}
+                className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium"
+              >
+                Comentar
+              </button>
+            </form>
+
+            {commentsQuery.isLoading && <p className="text-sm text-neutral-500">Carregando comentários...</p>}
+            {commentsQuery.isError && <p className="text-sm text-red-400">Não foi possível carregar os comentários.</p>}
+            {commentsQuery.data && commentsQuery.data.length === 0 && (
+              <p className="text-sm text-neutral-500">Nenhum comentário ainda. Seja o primeiro!</p>
+            )}
+
+            <ul className="flex flex-col gap-3">
+              {commentsQuery.data?.map((comment) => (
+                <li key={comment.id} className="rounded-lg border border-neutral-800 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-purple-400">{comment.user.username}</span>
+                    {comment.is_mine && (
+                      <button
+                        onClick={() => deleteCommentMutation.mutate(comment.id)}
+                        disabled={deleteCommentMutation.isPending}
+                        className="text-xs text-red-400 hover:underline"
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm text-neutral-200 mt-1">{comment.body}</p>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
