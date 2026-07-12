@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.compare import CompareResponse
 from app.schemas.friends import (
     FriendListResponse,
     FriendRequestCreate,
@@ -15,6 +16,7 @@ from app.schemas.friends import (
     UserSearchResponse,
     UserSearchResult,
 )
+from app.services import compare as compare_service
 from app.services import friends as friends_service
 from app.services.friends import FriendError
 
@@ -127,3 +129,23 @@ def remove_friend(
     ok = friends_service.remove_friend_by_user_id(db, current_user.id, fid)
     if not ok:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Amizade não encontrada.")
+
+
+@router.get("/{friend_id}/compare", response_model=CompareResponse)
+def compare_with_friend(
+    friend_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        fid = uuid.UUID(friend_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado.")
+    friend = db.query(User).filter(User.id == fid).first()
+    if friend is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado.")
+    try:
+        result = compare_service.compare_users(db, current_user.id, fid)
+    except FriendError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    return CompareResponse(friend=FriendUserOut(id=str(friend.id), username=friend.username), **result)
