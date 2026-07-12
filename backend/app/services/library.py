@@ -4,18 +4,21 @@
 QUALQUER usuário marca aquele título (favorita, muda status ou avalia).
 Usa o proxy TMDB (já com cache próprio) só pra pegar título/pôster/data na
 primeira vez; depois disso nunca mais precisa do TMDB pra esse título.
+
+Toda mudança "positiva" (favoritou, mudou status, deu nota) também grava
+uma `Activity`, usada para montar o feed social dos amigos. Não logamos
+remoções/limpezas (desfavoritar, tirar nota) pra não poluir o feed com
+eventos negativos.
 """
 from datetime import datetime, timezone
 
-from fastapi import status as http_status
 from sqlalchemy.orm import Session
 
-from sqlalchemy import or_
-
+from app.models.activity import Activity
 from app.models.media import Media
 from app.models.user_media_status import UserMediaStatus
 from app.services import tmdb
-from app.services.tmdb import MediaType, TMDBError
+from app.services.tmdb import MediaType
 
 
 async def get_or_create_media(db: Session, media_type: MediaType, tmdb_id: int) -> Media:
@@ -55,11 +58,13 @@ def _to_out(media: Media, entry: UserMediaStatus | None) -> dict:
     }
 
 
+def _log_activity(db: Session, user_id, media_id, action: str, detail: str | None) -> None:
+    db.add(Activity(user_id=user_id, media_id=media_id, action=action, detail=detail))
+
+
 async def get_status(db: Session, user_id, media_type: MediaType, tmdb_id: int) -> dict:
     media = db.query(Media).filter_by(tmdb_id=tmdb_id, media_type=media_type).first()
     if media is None:
-        # ainda não existe registro nenhum pra esse título — devolve "vazio"
-        # sem precisar bater no TMDB só pra mostrar um estado neutro.
         return {
             "tmdb_id": tmdb_id,
             "media_type": media_type,
@@ -82,6 +87,9 @@ async def upsert_status(db: Session, user_id, media_type: MediaType, tmdb_id: in
         entry = UserMediaStatus(user_id=user_id, media_id=media.id)
         db.add(entry)
 
+    was_favorite = entry.is_favorite
+    old_status = entry.status
+
     if "status" in update:
         entry.status = update["status"]
         if update["status"] == "assistido" and entry.watched_at is None:
@@ -90,6 +98,15 @@ async def upsert_status(db: Session, user_id, media_type: MediaType, tmdb_id: in
         entry.is_favorite = update["is_favorite"]
     if "rating" in update:
         entry.rating = update["rating"]
+
+    # Loga atividade só em transições "positivas" (algo novo marcado), não
+    # quando o usuário desmarca/limpa um campo.
+    if "is_favorite" in update and update["is_favorite"] and not was_favorite:
+        _log_activity(db, user_id, media.id, "favorited", None)
+    if "status" in update and update["status"] is not None and update["status"] != old_status:
+        _log_activity(db, user_id, media.id, "status_changed", update["status"])
+    if "rating" in update and update["rating"] is not None:
+        _log_activity(db, user_id, media.id, "rated", str(update["rating"]))
 
     db.commit()
     db.refresh(entry)
@@ -109,12 +126,12 @@ def delete_status(db: Session, user_id, media_type: MediaType, tmdb_id: int) -> 
 
 
 def list_library(db: Session, user_id, status_filter: str | None, favorites_only: bool) -> list[dict]:
+    from sqlalchemy import or_
+
     query = (
         db.query(UserMediaStatus, Media)
         .join(Media, UserMediaStatus.media_id == Media.id)
         .filter(UserMediaStatus.user_id == user_id)
-        # esconde entradas "vazias" (usuário desmarcou favorito/status/nota
-        # individualmente mas não clicou em "Remover da minha lista")
         .filter(
             or_(
                 UserMediaStatus.status.is_not(None),

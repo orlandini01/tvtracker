@@ -4,6 +4,8 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.auth import limiter, router as auth_router
+from app.api.feed import router as feed_router
+from app.api.friends import router as friends_router
 from app.api.library import router as library_router
 from app.api.media import router as media_router
 from app.api.routes import router as health_router
@@ -26,3 +28,5 @@ app.include_router(health_router)
 app.include_router(auth_router)
 app.include_router(media_router)
 app.include_router(library_router)
+app.include_router(friends_router)
+app.include_router(feed_router)

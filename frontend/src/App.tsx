@@ -1,4 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { FeedPage } from "./pages/FeedPage";
+import { FriendsPage } from "./pages/FriendsPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { MediaDetailPage } from "./pages/MediaDetailPage";
@@ -13,6 +15,8 @@ function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
       <Route path="/minha-lista" element={<ProtectedRoute><MyListPage /></ProtectedRoute>} />
+      <Route path="/amigos" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+      <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
       <Route path="/media/:mediaType/:tmdbId" element={<ProtectedRoute><MediaDetailPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -138,6 +138,12 @@ export function HomePage() {
               </button>
             ))}
           </div>
+          <Link to="/feed" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+            Feed
+          </Link>
+          <Link to="/amigos" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+            Amigos
+          </Link>
           <Link to="/minha-lista" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
             Minha lista
           </Link>
