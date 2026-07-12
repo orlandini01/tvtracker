@@ -19,12 +19,19 @@ class MediaListResponse(BaseModel):
     results: list[MediaSummary]
 
 
+class SeasonSummary(BaseModel):
+    season_number: int
+    name: str
+    episode_count: int
+
+
 class MediaDetail(MediaSummary):
     backdrop_url: str | None
     genres: list[str]
     runtime: int | None
     number_of_seasons: int | None
     status: str | None
+    seasons: list[SeasonSummary] | None = None
 
 
 class WatchProvider(BaseModel):

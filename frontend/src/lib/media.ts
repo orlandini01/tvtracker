@@ -18,12 +18,19 @@ export type MediaListResponse = {
   results: MediaSummary[];
 };
 
+export type SeasonSummary = {
+  season_number: number;
+  name: string;
+  episode_count: number;
+};
+
 export type MediaDetail = MediaSummary & {
   backdrop_url: string | null;
   genres: string[];
   runtime: number | null;
   number_of_seasons: number | null;
   status: string | null;
+  seasons: SeasonSummary[] | null;
 };
 
 export type WatchProvider = {

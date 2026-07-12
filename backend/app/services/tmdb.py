@@ -187,6 +187,18 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
         episode_runtimes = data.get("episode_run_time") or []
         runtime = episode_runtimes[0] if episode_runtimes else None
 
+    seasons = None
+    if media_type == "tv":
+        seasons = [
+            {
+                "season_number": s["season_number"],
+                "name": s.get("name") or f"Temporada {s['season_number']}",
+                "episode_count": s.get("episode_count", 0),
+            }
+            for s in data.get("seasons", [])
+            if s.get("season_number", 0) > 0  # exclui "Especiais" (season 0)
+        ]
+
     result = {
         **summary,
         "backdrop_url": _image_url(data.get("backdrop_path"), BACKDROP_BASE_URL),
@@ -194,10 +206,33 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
         "runtime": runtime,
         "number_of_seasons": data.get("number_of_seasons"),
         "status": data.get("status"),
+        "seasons": seasons,
     }
 
     _set_cache(db, cache_key, result)
     return result
+
+
+async def get_season_episodes(db: Session, tmdb_id: int, season_number: int) -> list[dict[str, Any]]:
+    """Lista os episódios de uma temporada de série."""
+    cache_key = f"season:{tmdb_id}:{season_number}"
+    cached = _get_cached(db, cache_key, TTL_DETAIL)
+    if cached is not None:
+        return cached["episodes"]
+
+    data = await _get(f"/tv/{tmdb_id}/season/{season_number}")
+    episodes = [
+        {
+            "episode_number": e["episode_number"],
+            "name": e.get("name") or f"Episódio {e['episode_number']}",
+            "air_date": e.get("air_date"),
+            "still_url": _image_url(e.get("still_path"), "https://image.tmdb.org/t/p/w300"),
+        }
+        for e in data.get("episodes", [])
+    ]
+
+    _set_cache(db, cache_key, {"episodes": episodes})
+    return episodes
 
 
 async def get_watch_providers(db: Session, media_type: MediaType, tmdb_id: int, region: str = "BR") -> dict[str, Any]:

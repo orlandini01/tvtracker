@@ -5,6 +5,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.auth import limiter, router as auth_router
 from app.api.comments import router as comments_router
+from app.api.episodes import router as episodes_router
 from app.api.feed import router as feed_router
 from app.api.friends import router as friends_router
 from app.api.library import router as library_router
@@ -27,6 +28,7 @@ app.add_middleware(
 
 app.include_router(health_router)
 app.include_router(auth_router)
+app.include_router(episodes_router)
 app.include_router(media_router)
 app.include_router(library_router)
 app.include_router(friends_router)

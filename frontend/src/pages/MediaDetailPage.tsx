@@ -11,6 +11,13 @@ import {
   type WatchStatus,
 } from "../lib/library";
 import { deleteComment, getComments, postComment } from "../lib/comments";
+import {
+  getSeasonEpisodes,
+  getShowProgress,
+  markEpisodeWatched,
+  markSeasonWatched,
+  unmarkEpisodeWatched,
+} from "../lib/episodes";
 
 const STATUS_OPTIONS: WatchStatus[] = ["quero_assistir", "assistindo", "assistido", "abandonei"];
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -86,6 +93,49 @@ export function MediaDetailPage() {
     const trimmed = commentInput.trim();
     if (!trimmed) return;
     postCommentMutation.mutate(trimmed);
+  }
+
+  const isTv = type === "tv";
+  const [selectedSeason, setSelectedSeason] = useState(1);
+
+  const progressQuery = useQuery({
+    queryKey: ["show-progress", id],
+    queryFn: () => getShowProgress(id),
+    enabled: enabled && isTv,
+  });
+
+  const seasonQuery = useQuery({
+    queryKey: ["season-episodes", id, selectedSeason],
+    queryFn: () => getSeasonEpisodes(id, selectedSeason),
+    enabled: enabled && isTv,
+  });
+
+  function invalidateEpisodeQueries() {
+    queryClient.invalidateQueries({ queryKey: ["season-episodes", id, selectedSeason] });
+    queryClient.invalidateQueries({ queryKey: ["show-progress", id] });
+  }
+
+  const markEpisodeMutation = useMutation({
+    mutationFn: (episodeNumber: number) => markEpisodeWatched(id, selectedSeason, episodeNumber),
+    onSuccess: invalidateEpisodeQueries,
+  });
+
+  const unmarkEpisodeMutation = useMutation({
+    mutationFn: (episodeNumber: number) => unmarkEpisodeWatched(id, selectedSeason, episodeNumber),
+    onSuccess: invalidateEpisodeQueries,
+  });
+
+  const markSeasonMutation = useMutation({
+    mutationFn: () => markSeasonWatched(id, selectedSeason),
+    onSuccess: invalidateEpisodeQueries,
+  });
+
+  function toggleEpisode(episodeNumber: number, watched: boolean) {
+    if (watched) {
+      unmarkEpisodeMutation.mutate(episodeNumber);
+    } else {
+      markEpisodeMutation.mutate(episodeNumber);
+    }
   }
 
   if (detailQuery.isLoading) {
@@ -214,6 +264,79 @@ export function MediaDetailPage() {
             >
               Remover da minha lista
             </button>
+          )}
+
+          {isTv && media.seasons && media.seasons.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h2 className="text-sm font-medium text-neutral-400">Episódios</h2>
+                {progressQuery.data && (
+                  <span className="text-xs text-neutral-500">
+                    {progressQuery.data.watched_count}/{progressQuery.data.total_count} assistidos
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-3">
+                {media.seasons.map((s) => (
+                  <button
+                    key={s.season_number}
+                    onClick={() => setSelectedSeason(s.season_number)}
+                    className={`px-3 py-1.5 rounded-full text-sm border ${
+                      selectedSeason === s.season_number
+                        ? "bg-purple-600 border-purple-500"
+                        : "border-neutral-700 hover:border-neutral-500"
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                ))}
+              </div>
+
+              {seasonQuery.isLoading && <p className="text-sm text-neutral-500">Carregando episódios...</p>}
+              {seasonQuery.isError && <p className="text-sm text-red-400">Não foi possível carregar os episódios.</p>}
+
+              {seasonQuery.data && (
+                <>
+                  <button
+                    onClick={() => markSeasonMutation.mutate()}
+                    disabled={markSeasonMutation.isPending}
+                    className="mb-3 text-xs text-purple-400 hover:underline"
+                  >
+                    Marcar temporada inteira como assistida
+                  </button>
+
+                  <ul className="flex flex-col gap-2">
+                    {seasonQuery.data.episodes.map((ep) => (
+                      <li
+                        key={ep.episode_number}
+                        className="flex items-center gap-3 rounded-lg border border-neutral-800 p-2"
+                      >
+                        <button
+                          onClick={() => toggleEpisode(ep.episode_number, ep.watched)}
+                          disabled={markEpisodeMutation.isPending || unmarkEpisodeMutation.isPending}
+                          title={ep.watched ? "Marcar como não assistido" : "Marcar como assistido"}
+                          className={`shrink-0 w-6 h-6 rounded-md border flex items-center justify-center text-xs ${
+                            ep.watched ? "bg-purple-600 border-purple-500" : "border-neutral-600 hover:border-neutral-400"
+                          }`}
+                        >
+                          {ep.watched ? "✓" : ""}
+                        </button>
+                        {ep.still_url && (
+                          <img src={ep.still_url} alt={ep.name} className="hidden sm:block w-20 h-12 object-cover rounded" />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm">
+                            {ep.episode_number}. {ep.name}
+                          </p>
+                          {ep.air_date && <p className="text-xs text-neutral-500">{ep.air_date}</p>}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
           )}
 
           <div className="mt-6">
