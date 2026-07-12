@@ -13,6 +13,7 @@ from app.models.friendship import Friendship
 from app.models.activity import Activity
 from app.models.comment import Comment
 from app.models.watched_episode import WatchedEpisode
+from app.models.notification import Notification
 
 config = context.config
 if config.config_file_name is not None:

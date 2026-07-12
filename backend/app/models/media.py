@@ -27,3 +27,9 @@ class Media(Base):
     poster_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     release_date: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    # Total de episódios já visto na última checagem de novidades (só usado
+    # pra séries). None = ainda não checamos essa série; nesse caso a
+    # primeira checagem só grava a baseline, sem gerar notificação (evita
+    # notificar "novidade" pra episódios antigos na primeira vez que o
+    # recurso roda pra um show já existente).
+    known_episode_count: Mapped[int | None] = mapped_column(nullable=True)

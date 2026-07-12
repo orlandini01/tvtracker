@@ -10,6 +10,7 @@ from app.api.feed import router as feed_router
 from app.api.friends import router as friends_router
 from app.api.library import router as library_router
 from app.api.media import router as media_router
+from app.api.notifications import router as notifications_router
 from app.api.routes import router as health_router
 from app.core.config import settings
 
@@ -34,3 +35,4 @@ app.include_router(library_router)
 app.include_router(friends_router)
 app.include_router(feed_router)
 app.include_router(comments_router)
+app.include_router(notifications_router)

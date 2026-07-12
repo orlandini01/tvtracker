@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { MediaCard } from "../components/MediaCard";
+import { NotificationBell } from "../components/NotificationBell";
 import {
   DISCOVER_CATEGORIES,
   discoverByProviders,
@@ -177,6 +178,7 @@ export function HomePage() {
               </button>
             ))}
           </div>
+          <NotificationBell />
           <Link to="/feed" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
             Feed
           </Link>
