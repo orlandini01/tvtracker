@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { MediaCard } from "../components/MediaCard";
-import { DISCOVER_CATEGORIES, discoverMedia, searchMedia, type MediaSummary } from "../lib/media";
+import {
+  DISCOVER_CATEGORIES,
+  discoverByProviders,
+  discoverMedia,
+  getProviderCatalog,
+  searchMedia,
+  type MediaSummary,
+  type MediaType,
+} from "../lib/media";
 
 const LANGUAGES = [
   { code: "pt", label: "PT" },
@@ -25,12 +33,33 @@ export function HomePage() {
   const [activeQuery, setActiveQuery] = useState("");
   const isSearching = activeQuery.trim().length > 0;
 
+  // Filtro por streaming: quando há provedores selecionados, a listagem
+  // troca de "categoria" pra "descoberta filtrada por plataforma".
+  const [showStreamingFilter, setShowStreamingFilter] = useState(false);
+  const [providerMediaType, setProviderMediaType] = useState<MediaType>("movie");
+  const [selectedProviders, setSelectedProviders] = useState<number[]>([]);
+  const hasProviderFilter = selectedProviders.length > 0;
+
+  const providerCatalogQuery = useQuery({
+    queryKey: ["provider-catalog", providerMediaType],
+    queryFn: () => getProviderCatalog(providerMediaType),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  function toggleProvider(id: number) {
+    setSelectedProviders((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+  }
+
+  function clearProviderFilter() {
+    setSelectedProviders([]);
+  }
+
   const discoverQuery = useInfiniteQuery({
     queryKey: ["discover", category],
     queryFn: ({ pageParam }) => discoverMedia(category, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => (lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined),
-    enabled: !isSearching,
+    enabled: !isSearching && !hasProviderFilter,
     staleTime: LIST_STALE_TIME,
     refetchOnWindowFocus: false,
   });
@@ -45,7 +74,17 @@ export function HomePage() {
     refetchOnWindowFocus: false,
   });
 
-  const active = isSearching ? searchQuery : discoverQuery;
+  const providerDiscoverQuery = useInfiniteQuery({
+    queryKey: ["discover-by-provider", providerMediaType, selectedProviders.slice().sort().join(",")],
+    queryFn: ({ pageParam }) => discoverByProviders(providerMediaType, selectedProviders, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined),
+    enabled: !isSearching && hasProviderFilter,
+    staleTime: LIST_STALE_TIME,
+    refetchOnWindowFocus: false,
+  });
+
+  const active = isSearching ? searchQuery : hasProviderFilter ? providerDiscoverQuery : discoverQuery;
 
   // Achata as páginas acumuladas num array só, removendo duplicatas (defensivo
   // caso o TMDB repita algum item entre páginas).
@@ -82,7 +121,7 @@ export function HomePage() {
     observer.observe(el);
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active.hasNextPage, active.isFetchingNextPage, active.fetchNextPage, category, activeQuery]);
+  }, [active.hasNextPage, active.isFetchingNextPage, active.fetchNextPage, category, activeQuery, providerMediaType, selectedProviders]);
 
   function handleSearchSubmit(e: FormEvent) {
     e.preventDefault();
@@ -156,22 +195,91 @@ export function HomePage() {
 
       <main className="px-6 py-6">
         {!isSearching && (
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
-            {DISCOVER_CATEGORIES.map((cat) => (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
               <button
-                key={cat.value}
-                onClick={() => setCategory(cat.value)}
-                className={`whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${
-                  category === cat.value ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                onClick={() => setShowStreamingFilter((v) => !v)}
+                className={`flex items-center gap-1 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${
+                  hasProviderFilter ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                 }`}
               >
-                {cat.label}
+                Streaming{hasProviderFilter ? ` (${selectedProviders.length})` : ""}
               </button>
-            ))}
+              {hasProviderFilter && (
+                <button onClick={clearProviderFilter} className="text-xs text-neutral-500 hover:text-red-400 hover:underline">
+                  Limpar filtro
+                </button>
+              )}
+            </div>
+
+            {showStreamingFilter && (
+              <div className="rounded-lg border border-neutral-800 p-3 mb-3">
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setProviderMediaType("movie")}
+                    className={`px-3 py-1 rounded-md text-xs border ${
+                      providerMediaType === "movie" ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                    }`}
+                  >
+                    Filmes
+                  </button>
+                  <button
+                    onClick={() => setProviderMediaType("tv")}
+                    className={`px-3 py-1 rounded-md text-xs border ${
+                      providerMediaType === "tv" ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                    }`}
+                  >
+                    Séries
+                  </button>
+                </div>
+
+                {providerCatalogQuery.isLoading && <p className="text-xs text-neutral-500">Carregando plataformas...</p>}
+                {providerCatalogQuery.isError && <p className="text-xs text-red-400">Não foi possível carregar as plataformas.</p>}
+
+                <div className="flex flex-wrap gap-2">
+                  {providerCatalogQuery.data?.map((p) => (
+                    <button
+                      key={p.provider_id}
+                      onClick={() => toggleProvider(p.provider_id)}
+                      title={p.provider_name}
+                      className={`flex items-center gap-2 rounded-md border px-2 py-1 text-xs ${
+                        selectedProviders.includes(p.provider_id)
+                          ? "bg-purple-600 border-purple-500"
+                          : "border-neutral-700 hover:border-neutral-500"
+                      }`}
+                    >
+                      {p.logo_url && <img src={p.logo_url} alt="" className="w-5 h-5 rounded" />}
+                      {p.provider_name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!hasProviderFilter && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {DISCOVER_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setCategory(cat.value)}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${
+                      category === cat.value ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {isSearching && <p className="text-sm text-neutral-400 mb-4">Resultados para "{activeQuery}"</p>}
+        {!isSearching && hasProviderFilter && (
+          <p className="text-sm text-neutral-400 mb-4">
+            {providerMediaType === "movie" ? "Filmes" : "Séries"} disponíveis nas plataformas selecionadas
+          </p>
+        )}
 
         {showInitialLoading && <p className="text-neutral-400 text-sm">Carregando...</p>}
 

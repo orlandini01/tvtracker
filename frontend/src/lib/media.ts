@@ -72,3 +72,28 @@ export async function getWatchProviders(
   });
   return data;
 }
+
+export type WatchProviderCatalogItem = {
+  provider_id: number;
+  provider_name: string;
+  logo_url: string | null;
+};
+
+export async function getProviderCatalog(mediaType: MediaType, region = "BR"): Promise<WatchProviderCatalogItem[]> {
+  const { data } = await api.get<{ results: WatchProviderCatalogItem[] }>("/media/providers/catalog", {
+    params: { media_type: mediaType, region },
+  });
+  return data.results;
+}
+
+export async function discoverByProviders(
+  mediaType: MediaType,
+  providerIds: number[],
+  page = 1,
+  region = "BR",
+): Promise<MediaListResponse> {
+  const { data } = await api.get<MediaListResponse>("/media/discover-by-provider", {
+    params: { media_type: mediaType, providers: providerIds.join(","), region, page },
+  });
+  return data;
+}

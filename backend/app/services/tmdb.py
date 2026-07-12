@@ -37,6 +37,7 @@ TTL_DISCOVER = timedelta(hours=6)
 TTL_SEARCH = timedelta(hours=3)
 TTL_DETAIL = timedelta(hours=24)
 TTL_PROVIDERS = timedelta(hours=12)
+TTL_PROVIDER_CATALOG = timedelta(hours=24)
 
 
 class TMDBError(Exception):
@@ -224,6 +225,73 @@ async def get_watch_providers(db: Session, media_type: MediaType, tmdb_id: int, 
         "rent": _providers("rent"),
         "buy": _providers("buy"),
     }
+
+    _set_cache(db, cache_key, result)
+    return result
+
+
+async def list_watch_provider_catalog(db: Session, media_type: MediaType, region: str = "BR") -> list[dict[str, Any]]:
+    """Lista os provedores de streaming disponíveis numa região, pra
+    alimentar o seletor de filtro na tela de descoberta."""
+    if media_type not in ("movie", "tv"):
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "media_type deve ser 'movie' ou 'tv'")
+
+    region = region.upper()
+    cache_key = f"provider_catalog:{media_type}:{region}"
+    cached = _get_cached(db, cache_key, TTL_PROVIDER_CATALOG)
+    if cached is not None:
+        return cached["results"]
+
+    data = await _get(f"/watch/providers/{media_type}", {"watch_region": region})
+    results = [
+        {
+            "provider_id": p["provider_id"],
+            "provider_name": p["provider_name"],
+            "logo_url": _image_url(p.get("logo_path"), "https://image.tmdb.org/t/p/w92"),
+        }
+        for p in data.get("results", [])
+        # a API do TMDB devolve o catálogo global de provedores; filtramos só
+        # os que de fato operam na região pedida (têm display_priorities pra ela)
+        if region in (p.get("display_priorities") or {})
+    ]
+    results.sort(key=lambda p: p["provider_name"].casefold())
+
+    result = {"results": results}
+    _set_cache(db, cache_key, result)
+    return results
+
+
+async def discover_by_providers(
+    db: Session,
+    media_type: MediaType,
+    provider_ids: list[int],
+    region: str = "BR",
+    page: int = 1,
+) -> dict[str, Any]:
+    """Descoberta filtrada por plataforma de streaming — usa /discover/{tipo}
+    (diferente das categorias fixas em DISCOVER_ENDPOINTS, que usam
+    endpoints dedicados do TMDB que não aceitam filtro de provedor)."""
+    if media_type not in ("movie", "tv"):
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "media_type deve ser 'movie' ou 'tv'")
+    if not provider_ids:
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "Selecione ao menos um provedor de streaming")
+
+    region = region.upper()
+    provider_key = ",".join(str(p) for p in sorted(provider_ids))
+    cache_key = f"discover_provider:{media_type}:{region}:{provider_key}:{page}"
+    cached = _get_cached(db, cache_key, TTL_DISCOVER)
+    if cached is not None:
+        return cached
+
+    params = {
+        "page": page,
+        "watch_region": region,
+        "with_watch_providers": "|".join(str(p) for p in provider_ids),
+        "sort_by": "popularity.desc",
+    }
+    data = await _get(f"/discover/{media_type}", params)
+    results = [_map_summary(item, media_type) for item in data.get("results", [])]
+    result = {"page": data.get("page", 1), "total_pages": data.get("total_pages", 1), "results": results}
 
     _set_cache(db, cache_key, result)
     return result

@@ -38,3 +38,13 @@ class WatchProvidersResponse(BaseModel):
     flatrate: list[WatchProvider]
     rent: list[WatchProvider]
     buy: list[WatchProvider]
+
+
+class WatchProviderCatalogItem(BaseModel):
+    provider_id: int
+    provider_name: str
+    logo_url: str | None
+
+
+class WatchProviderCatalogResponse(BaseModel):
+    results: list[WatchProviderCatalogItem]
