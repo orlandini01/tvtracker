@@ -11,7 +11,14 @@ títulos parecidos que ele ainda não rastreou.
 Conta nova ou sem sinal suficiente: caímos pros populares (mesma lista
 que já aparece na home), pra nunca devolver uma seção vazia sem
 explicação.
+
+Perf: os `get_detail` por título de sinal (pra extrair gênero) e o par
+filmes/séries são buscados em paralelo via asyncio.gather — cada título
+já favoritado/avaliado bem costuma ter cache TMDB próprio (24h), mas
+buscar um por um em série soma a latência de rede de todos eles; em
+paralelo, o tempo total fica perto do maior request individual.
 """
+import asyncio
 from collections import Counter
 
 from sqlalchemy import or_
@@ -56,16 +63,23 @@ def _signal_media(db: Session, user_id, media_type: MediaType) -> list[Media]:
     return [media for _entry, media in rows]
 
 
+async def _detail_or_none(db: Session, media_type: MediaType, tmdb_id: int) -> dict | None:
+    try:
+        return await tmdb.get_detail(db, media_type, tmdb_id)
+    except TMDBError:
+        return None
+
+
 async def _top_genre_ids(db: Session, user_id, media_type: MediaType) -> list[int]:
     signal = _signal_media(db, user_id, media_type)
     if not signal:
         return []
 
+    details = await asyncio.gather(*(_detail_or_none(db, media_type, media.tmdb_id) for media in signal))
+
     genre_counter: Counter = Counter()
-    for media in signal:
-        try:
-            detail = await tmdb.get_detail(db, media_type, media.tmdb_id)
-        except TMDBError:
+    for detail in details:
+        if detail is None:
             continue
         genre_counter.update(detail.get("genres") or [])
 
@@ -94,6 +108,8 @@ async def _recommend_for_type(db: Session, user_id, media_type: MediaType) -> li
 
 
 async def get_recommendations(db: Session, user_id) -> dict:
-    movies = await _recommend_for_type(db, user_id, "movie")
-    shows = await _recommend_for_type(db, user_id, "tv")
+    movies, shows = await asyncio.gather(
+        _recommend_for_type(db, user_id, "movie"),
+        _recommend_for_type(db, user_id, "tv"),
+    )
     return {"movies": movies, "shows": shows}

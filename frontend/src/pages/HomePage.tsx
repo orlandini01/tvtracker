@@ -55,6 +55,9 @@ export function HomePage() {
   const providerCatalogQuery = useQuery({
     queryKey: ["provider-catalog", providerMediaType],
     queryFn: () => getProviderCatalog(providerMediaType),
+    // só busca quando o painel de streaming é aberto — antes disso é um
+    // request a mais em todo carregamento da home que ninguém vai usar.
+    enabled: showStreamingFilter,
     staleTime: 60 * 60 * 1000,
   });
 
