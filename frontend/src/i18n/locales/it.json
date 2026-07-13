@@ -94,6 +94,8 @@
   "mediaDetail.episodes_error": "Impossibile caricare gli episodi.",
   "mediaDetail.mark_unwatched_title": "Segna come non visto",
   "mediaDetail.mark_watched_title": "Segna come visto",
+  "mediaDetail.episode_rating_title": "Voto dell'episodio",
+  "mediaDetail.episode_rating_empty": "–",
   "mediaDetail.where_to_watch": "Dove guardare ({{region}})",
   "mediaDetail.providers_loading": "Caricamento...",
   "mediaDetail.providers_empty": "Nessuna piattaforma trovata per questa regione.",

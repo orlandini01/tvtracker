@@ -6,6 +6,7 @@ export type Episode = {
   air_date: string | null;
   still_url: string | null;
   watched: boolean;
+  rating: number | null;
 };
 
 export type SeasonEpisodesResponse = {
@@ -38,4 +39,12 @@ export async function markSeasonWatched(tmdbId: number, seasonNumber: number): P
 export async function getShowProgress(tmdbId: number): Promise<ShowProgress> {
   const { data } = await api.get<ShowProgress>(`/media/tv/${tmdbId}/progress`);
   return data;
+}
+
+export async function rateEpisode(tmdbId: number, seasonNumber: number, episodeNumber: number, rating: number): Promise<void> {
+  await api.put(`/media/tv/${tmdbId}/season/${seasonNumber}/episode/${episodeNumber}/rating`, { rating });
+}
+
+export async function clearEpisodeRating(tmdbId: number, seasonNumber: number, episodeNumber: number): Promise<void> {
+  await api.delete(`/media/tv/${tmdbId}/season/${seasonNumber}/episode/${episodeNumber}/rating`);
 }

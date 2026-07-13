@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
 from app.db.session import get_db
-from app.schemas.episodes import SeasonEpisodesResponse, ShowProgress
+from app.schemas.episodes import EpisodeRatingUpdate, SeasonEpisodesResponse, ShowProgress
 from app.services import episodes as episodes_service
 from app.services import tmdb
 from app.services.tmdb import TMDBError
@@ -48,6 +48,39 @@ def unmark_episode(
     current_user=Depends(get_current_user),
 ):
     episodes_service.unmark_episode(db, current_user.id, tmdb_id, season_number, episode_number)
+
+
+@router.put(
+    "/{tmdb_id}/season/{season_number}/episode/{episode_number}/rating",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def rate_episode(
+    tmdb_id: int,
+    season_number: int,
+    episode_number: int,
+    payload: EpisodeRatingUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    await _call(
+        episodes_service.rate_episode(
+            db, current_user.id, tmdb_id, season_number, episode_number, payload.rating
+        )
+    )
+
+
+@router.delete(
+    "/{tmdb_id}/season/{season_number}/episode/{episode_number}/rating",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def clear_episode_rating(
+    tmdb_id: int,
+    season_number: int,
+    episode_number: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    episodes_service.clear_episode_rating(db, current_user.id, tmdb_id, season_number, episode_number)
 
 
 @router.post("/{tmdb_id}/season/{season_number}/mark-all", status_code=status.HTTP_204_NO_CONTENT)

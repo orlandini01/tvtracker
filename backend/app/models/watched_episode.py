@@ -25,3 +25,4 @@ class WatchedEpisode(Base):
     season_number: Mapped[int] = mapped_column(Integer, nullable=False)
     episode_number: Mapped[int] = mapped_column(Integer, nullable=False)
     watched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)

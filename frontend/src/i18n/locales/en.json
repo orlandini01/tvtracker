@@ -94,6 +94,8 @@
   "mediaDetail.episodes_error": "Could not load the episodes.",
   "mediaDetail.mark_unwatched_title": "Mark as unwatched",
   "mediaDetail.mark_watched_title": "Mark as watched",
+  "mediaDetail.episode_rating_title": "Episode rating",
+  "mediaDetail.episode_rating_empty": "–",
   "mediaDetail.where_to_watch": "Where to watch ({{region}})",
   "mediaDetail.providers_loading": "Loading...",
   "mediaDetail.providers_empty": "No platforms found for this region.",

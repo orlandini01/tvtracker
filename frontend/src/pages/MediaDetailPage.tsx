@@ -13,10 +13,12 @@ import {
 } from "../lib/library";
 import { deleteComment, getComments, postComment } from "../lib/comments";
 import {
+  clearEpisodeRating,
   getSeasonEpisodes,
   getShowProgress,
   markEpisodeWatched,
   markSeasonWatched,
+  rateEpisode,
   unmarkEpisodeWatched,
 } from "../lib/episodes";
 
@@ -132,11 +134,30 @@ export function MediaDetailPage() {
     onSuccess: invalidateEpisodeQueries,
   });
 
+  const rateEpisodeMutation = useMutation({
+    mutationFn: ({ episodeNumber, rating }: { episodeNumber: number; rating: number }) =>
+      rateEpisode(id, selectedSeason, episodeNumber, rating),
+    onSuccess: invalidateEpisodeQueries,
+  });
+
+  const clearEpisodeRatingMutation = useMutation({
+    mutationFn: (episodeNumber: number) => clearEpisodeRating(id, selectedSeason, episodeNumber),
+    onSuccess: invalidateEpisodeQueries,
+  });
+
   function toggleEpisode(episodeNumber: number, watched: boolean) {
     if (watched) {
       unmarkEpisodeMutation.mutate(episodeNumber);
     } else {
       markEpisodeMutation.mutate(episodeNumber);
+    }
+  }
+
+  function handleEpisodeRatingChange(episodeNumber: number, value: string) {
+    if (value === "") {
+      clearEpisodeRatingMutation.mutate(episodeNumber);
+    } else {
+      rateEpisodeMutation.mutate({ episodeNumber, rating: Number(value) });
     }
   }
 
@@ -333,6 +354,23 @@ export function MediaDetailPage() {
                           </p>
                           {ep.air_date && <p className="text-xs text-neutral-500">{ep.air_date}</p>}
                         </div>
+                        <select
+                          value={ep.rating ?? ""}
+                          onChange={(e) => handleEpisodeRatingChange(ep.episode_number, e.target.value)}
+                          disabled={rateEpisodeMutation.isPending || clearEpisodeRatingMutation.isPending}
+                          title={t("mediaDetail.episode_rating_title")}
+                          aria-label={t("mediaDetail.episode_rating_title")}
+                          className={`shrink-0 rounded-md border bg-neutral-900 text-xs px-1.5 py-1 ${
+                            ep.rating != null ? "border-yellow-500 text-yellow-400" : "border-neutral-700 text-neutral-400"
+                          }`}
+                        >
+                          <option value="">{t("mediaDetail.episode_rating_empty")}</option>
+                          {RATING_OPTIONS.map((n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
                       </li>
                     ))}
                   </ul>

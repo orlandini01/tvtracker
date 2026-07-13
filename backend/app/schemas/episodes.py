@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class EpisodeOut(BaseModel):
@@ -7,6 +7,7 @@ class EpisodeOut(BaseModel):
     air_date: str | None
     still_url: str | None
     watched: bool
+    rating: int | None
 
 
 class SeasonEpisodesResponse(BaseModel):
@@ -17,3 +18,7 @@ class SeasonEpisodesResponse(BaseModel):
 class ShowProgress(BaseModel):
     watched_count: int
     total_count: int
+
+
+class EpisodeRatingUpdate(BaseModel):
+    rating: int = Field(ge=1, le=10)

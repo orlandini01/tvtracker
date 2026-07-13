@@ -94,6 +94,8 @@
   "mediaDetail.episodes_error": "Não foi possível carregar os episódios.",
   "mediaDetail.mark_unwatched_title": "Marcar como não assistido",
   "mediaDetail.mark_watched_title": "Marcar como assistido",
+  "mediaDetail.episode_rating_title": "Nota do episódio",
+  "mediaDetail.episode_rating_empty": "–",
   "mediaDetail.where_to_watch": "Onde assistir ({{region}})",
   "mediaDetail.providers_loading": "Carregando...",
   "mediaDetail.providers_empty": "Nenhuma plataforma encontrada para esta região.",
