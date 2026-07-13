@@ -74,6 +74,11 @@
   "home.loading_more": "Carregando mais...",
   "home.end_of_results": "Fim dos resultados.",
   "home.footer_tmdb": "Dados fornecidos por TMDB. Este produto usa a API do TMDB, mas não é endossado ou certificado pelo TMDB.",
+  "home.recommended_heading": "Recomendado pra você",
+  "home.recommended_loading": "Carregando recomendações...",
+  "home.recommended_error": "Não foi possível carregar suas recomendações.",
+  "home.recommended_movies": "Filmes",
+  "home.recommended_shows": "Séries",
 
   "mediaDetail.loading": "Carregando...",
   "mediaDetail.not_found": "Não foi possível carregar este título.",

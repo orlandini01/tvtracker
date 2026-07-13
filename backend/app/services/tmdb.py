@@ -296,6 +296,58 @@ async def list_watch_provider_catalog(db: Session, media_type: MediaType, region
     return results
 
 
+async def get_genre_map(db: Session, media_type: MediaType) -> dict[str, int]:
+    """Nome (no idioma configurado) -> id do gênero no TMDB. Usado pra
+    traduzir os nomes de gênero que já guardamos em cache (via get_detail)
+    de volta pra IDs, que é o que o /discover exige como filtro."""
+    if media_type not in ("movie", "tv"):
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "media_type deve ser 'movie' ou 'tv'")
+
+    cache_key = f"genre_map:{media_type}"
+    cached = _get_cached(db, cache_key, TTL_PROVIDER_CATALOG)
+    if cached is not None:
+        return cached["map"]
+
+    data = await _get(f"/genre/{media_type}/list")
+    mapping = {g["name"]: g["id"] for g in data.get("genres", [])}
+
+    _set_cache(db, cache_key, {"map": mapping})
+    return mapping
+
+
+async def discover_by_genres(
+    db: Session,
+    media_type: MediaType,
+    genre_ids: list[int],
+    page: int = 1,
+) -> dict[str, Any]:
+    """Descoberta filtrada por gênero — usado pelas recomendações
+    personalizadas (perfil de gosto do usuário construído a partir dos
+    gêneros dos títulos que ele favoritou/avaliou bem/assistiu)."""
+    if media_type not in ("movie", "tv"):
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "media_type deve ser 'movie' ou 'tv'")
+    if not genre_ids:
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "Informe ao menos um gênero")
+
+    genre_key = ",".join(str(g) for g in sorted(genre_ids))
+    cache_key = f"discover_genre:{media_type}:{genre_key}:{page}"
+    cached = _get_cached(db, cache_key, TTL_DISCOVER)
+    if cached is not None:
+        return cached
+
+    params = {
+        "page": page,
+        "with_genres": "|".join(str(g) for g in genre_ids),
+        "sort_by": "popularity.desc",
+    }
+    data = await _get(f"/discover/{media_type}", params)
+    results = [_map_summary(item, media_type) for item in data.get("results", [])]
+    result = {"page": data.get("page", 1), "total_pages": data.get("total_pages", 1), "results": results}
+
+    _set_cache(db, cache_key, result)
+    return result
+
+
 async def discover_by_providers(
     db: Session,
     media_type: MediaType,

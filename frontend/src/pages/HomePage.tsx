@@ -14,6 +14,7 @@ import {
   type MediaSummary,
   type MediaType,
 } from "../lib/media";
+import { getRecommendations } from "../lib/recommendations";
 
 const LANGUAGES = [
   { code: "pt", label: "PT" },
@@ -55,6 +56,12 @@ export function HomePage() {
     queryKey: ["provider-catalog", providerMediaType],
     queryFn: () => getProviderCatalog(providerMediaType),
     staleTime: 60 * 60 * 1000,
+  });
+
+  const recommendationsQuery = useQuery({
+    queryKey: ["recommendations"],
+    queryFn: getRecommendations,
+    staleTime: LIST_STALE_TIME,
   });
 
   function toggleProvider(id: number) {
@@ -209,6 +216,38 @@ export function HomePage() {
       </header>
 
       <main className="px-6 py-6">
+        {!isSearching && (recommendationsQuery.isLoading || recommendationsQuery.isError || (recommendationsQuery.data && (recommendationsQuery.data.movies.length > 0 || recommendationsQuery.data.shows.length > 0))) && (
+          <section className="mb-8">
+            <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("home.recommended_heading")}</h2>
+            {recommendationsQuery.isLoading && <p className="text-xs text-neutral-500">{t("home.recommended_loading")}</p>}
+            {recommendationsQuery.isError && <p className="text-xs text-red-400">{t("home.recommended_error")}</p>}
+            {recommendationsQuery.data?.movies && recommendationsQuery.data.movies.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-neutral-500 mb-2">{t("home.recommended_movies")}</p>
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {recommendationsQuery.data.movies.map((item) => (
+                    <div key={`${item.media_type}-${item.tmdb_id}`} className="w-32 shrink-0">
+                      <MediaCard item={item} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {recommendationsQuery.data?.shows && recommendationsQuery.data.shows.length > 0 && (
+              <div>
+                <p className="text-xs text-neutral-500 mb-2">{t("home.recommended_shows")}</p>
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {recommendationsQuery.data.shows.map((item) => (
+                    <div key={`${item.media_type}-${item.tmdb_id}`} className="w-32 shrink-0">
+                      <MediaCard item={item} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
         {!isSearching && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
