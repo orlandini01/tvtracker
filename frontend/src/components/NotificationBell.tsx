@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   getNotifications,
   getUnreadCount,
@@ -13,6 +14,7 @@ import {
 const UNREAD_POLL_INTERVAL = 60 * 1000;
 
 export function NotificationBell() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const queryClient = useQueryClient();
@@ -67,7 +69,7 @@ export function NotificationBell() {
     <div className="relative" ref={containerRef}>
       <button
         onClick={() => setOpen((v) => !v)}
-        title="Notificações"
+        title={t("notifications.title")}
         className="relative rounded-full border border-neutral-700 hover:border-purple-500 w-9 h-9 flex items-center justify-center text-lg"
       >
         🔔
@@ -81,22 +83,22 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-900 shadow-xl z-50">
           <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-neutral-800">
-            <span className="text-sm font-medium">Notificações</span>
+            <span className="text-sm font-medium">{t("notifications.title")}</span>
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllReadMutation.mutate()}
                 disabled={markAllReadMutation.isPending}
                 className="text-xs text-purple-400 hover:underline"
               >
-                Marcar todas como lidas
+                {t("notifications.mark_all_read")}
               </button>
             )}
           </div>
 
-          {listQuery.isLoading && <p className="text-xs text-neutral-500 px-3 py-3">Carregando...</p>}
-          {listQuery.isError && <p className="text-xs text-red-400 px-3 py-3">Não foi possível carregar.</p>}
+          {listQuery.isLoading && <p className="text-xs text-neutral-500 px-3 py-3">{t("notifications.loading")}</p>}
+          {listQuery.isError && <p className="text-xs text-red-400 px-3 py-3">{t("notifications.error")}</p>}
           {listQuery.data && listQuery.data.results.length === 0 && (
-            <p className="text-xs text-neutral-500 px-3 py-3">Nenhuma notificação por aqui.</p>
+            <p className="text-xs text-neutral-500 px-3 py-3">{t("notifications.empty")}</p>
           )}
 
           <ul>

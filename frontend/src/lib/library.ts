@@ -3,11 +3,13 @@ import type { MediaType } from "./media";
 
 export type WatchStatus = "quero_assistir" | "assistindo" | "assistido" | "abandonei";
 
-export const STATUS_LABELS: Record<WatchStatus, string> = {
-  quero_assistir: "Quero assistir",
-  assistindo: "Assistindo",
-  assistido: "Assistido",
-  abandonei: "Abandonei",
+// Chaves de tradução (não o texto em si) — cada componente resolve o texto
+// de verdade com t(STATUS_LABEL_KEYS[status]) no idioma ativo.
+export const STATUS_LABEL_KEYS: Record<WatchStatus, string> = {
+  quero_assistir: "status.quero_assistir",
+  assistindo: "status.assistindo",
+  assistido: "status.assistido",
+  abandonei: "status.abandonei",
 };
 
 export type LibraryEntry = {

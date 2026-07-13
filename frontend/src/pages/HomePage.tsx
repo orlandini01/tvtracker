@@ -21,12 +21,22 @@ const LANGUAGES = [
   { code: "it", label: "IT" },
 ];
 
+// value = mesma chave usada no backend (categoria de discover); a label
+// exibida vem do i18n (home.categories.<value>).
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  popular_movies: "home.categories.popular_movies",
+  popular_tv: "home.categories.popular_tv",
+  now_playing: "home.categories.now_playing",
+  upcoming: "home.categories.upcoming",
+  on_the_air: "home.categories.on_the_air",
+};
+
 // Lista não muda a cada segundo — evita refetch/erro toda vez que o usuário
 // troca de aba do navegador e reduz a chance de esbarrar em rate limit do TMDB.
 const LIST_STALE_TIME = 5 * 60 * 1000;
 
 export function HomePage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
 
   const [category, setCategory] = useState<string>(DISCOVER_CATEGORIES[0].value);
@@ -151,15 +161,15 @@ export function HomePage() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Buscar filmes ou séries..."
+            placeholder={t("home.search_placeholder")}
             className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
           />
           <button type="submit" className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium">
-            Buscar
+            {t("home.search_button")}
           </button>
           {isSearching && (
             <button type="button" onClick={clearSearch} className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:border-neutral-500">
-              Limpar
+              {t("home.clear_button")}
             </button>
           )}
         </form>
@@ -180,20 +190,20 @@ export function HomePage() {
           </div>
           <NotificationBell />
           <Link to="/wrapped" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
-            Wrapped
+            {t("nav.wrapped")}
           </Link>
           <Link to="/feed" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
-            Feed
+            {t("nav.feed")}
           </Link>
           <Link to="/amigos" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
-            Amigos
+            {t("nav.friends")}
           </Link>
           <Link to="/minha-lista" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
-            Minha lista
+            {t("nav.my_list")}
           </Link>
           {user && <span className="text-sm text-neutral-400 hidden sm:inline">{user.username}</span>}
           <button onClick={() => logout()} className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm">
-            Sair
+            {t("nav.logout")}
           </button>
         </div>
       </header>
@@ -208,11 +218,11 @@ export function HomePage() {
                   hasProviderFilter ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                 }`}
               >
-                Streaming{hasProviderFilter ? ` (${selectedProviders.length})` : ""}
+                {t("home.streaming_toggle")}{hasProviderFilter ? ` (${selectedProviders.length})` : ""}
               </button>
               {hasProviderFilter && (
                 <button onClick={clearProviderFilter} className="text-xs text-neutral-500 hover:text-red-400 hover:underline">
-                  Limpar filtro
+                  {t("home.streaming_clear")}
                 </button>
               )}
             </div>
@@ -226,7 +236,7 @@ export function HomePage() {
                       providerMediaType === "movie" ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                     }`}
                   >
-                    Filmes
+                    {t("home.streaming_movies")}
                   </button>
                   <button
                     onClick={() => setProviderMediaType("tv")}
@@ -234,12 +244,12 @@ export function HomePage() {
                       providerMediaType === "tv" ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                     }`}
                   >
-                    Séries
+                    {t("home.streaming_tv")}
                   </button>
                 </div>
 
-                {providerCatalogQuery.isLoading && <p className="text-xs text-neutral-500">Carregando plataformas...</p>}
-                {providerCatalogQuery.isError && <p className="text-xs text-red-400">Não foi possível carregar as plataformas.</p>}
+                {providerCatalogQuery.isLoading && <p className="text-xs text-neutral-500">{t("home.streaming_loading")}</p>}
+                {providerCatalogQuery.isError && <p className="text-xs text-red-400">{t("home.streaming_error")}</p>}
 
                 <div className="flex flex-wrap gap-2">
                   {providerCatalogQuery.data?.map((p) => (
@@ -271,7 +281,7 @@ export function HomePage() {
                       category === cat.value ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                     }`}
                   >
-                    {cat.label}
+                    {t(CATEGORY_LABEL_KEYS[cat.value])}
                   </button>
                 ))}
               </div>
@@ -279,23 +289,23 @@ export function HomePage() {
           </div>
         )}
 
-        {isSearching && <p className="text-sm text-neutral-400 mb-4">Resultados para "{activeQuery}"</p>}
+        {isSearching && <p className="text-sm text-neutral-400 mb-4">{t("home.search_results_for", { query: activeQuery })}</p>}
         {!isSearching && hasProviderFilter && (
           <p className="text-sm text-neutral-400 mb-4">
-            {providerMediaType === "movie" ? "Filmes" : "Séries"} disponíveis nas plataformas selecionadas
+            {t(providerMediaType === "movie" ? "home.provider_results_movie" : "home.provider_results_tv")}
           </p>
         )}
 
-        {showInitialLoading && <p className="text-neutral-400 text-sm">Carregando...</p>}
+        {showInitialLoading && <p className="text-neutral-400 text-sm">{t("home.loading")}</p>}
 
         {showInitialError && (
           <p className="text-red-400 text-sm">
-            Não foi possível carregar. Tenta de novo em alguns segundos (pode ser instabilidade momentânea do TMDB).
+            {t("home.error")}
           </p>
         )}
 
         {!showInitialLoading && !showInitialError && results.length === 0 && (
-          <p className="text-neutral-400 text-sm">Nada encontrado.</p>
+          <p className="text-neutral-400 text-sm">{t("home.empty")}</p>
         )}
 
         {results.length > 0 && (
@@ -307,9 +317,9 @@ export function HomePage() {
             </div>
 
             <div ref={sentinelRef} className="h-12 flex items-center justify-center mt-6">
-              {active.isFetchingNextPage && <span className="text-xs text-neutral-500">Carregando mais...</span>}
+              {active.isFetchingNextPage && <span className="text-xs text-neutral-500">{t("home.loading_more")}</span>}
               {!active.hasNextPage && !active.isFetchingNextPage && (
-                <span className="text-xs text-neutral-600">Fim dos resultados.</span>
+                <span className="text-xs text-neutral-600">{t("home.end_of_results")}</span>
               )}
             </div>
           </>
@@ -317,7 +327,7 @@ export function HomePage() {
       </main>
 
       <footer className="px-6 py-4 text-center text-xs text-neutral-600">
-        Dados fornecidos por TMDB. Este produto usa a API do TMDB, mas não é endossado ou certificado pelo TMDB.
+        {t("home.footer_tmdb")}
       </footer>
     </div>
   );

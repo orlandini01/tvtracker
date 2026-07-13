@@ -2,16 +2,17 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
+import i18n from "../i18n";
 
 function extractErrorMessage(err: unknown): string {
   const anyErr = err as { response?: { status?: number; data?: unknown } };
   if (anyErr?.response?.status === 401) {
-    return "Email ou senha inválidos";
+    return i18n.t("auth.login.invalid_credentials");
   }
   const detail = (anyErr?.response?.data as { detail?: unknown })?.detail;
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail) && detail[0]?.msg) return detail[0].msg as string;
-  return "Não foi possível entrar. Tenta de novo.";
+  return i18n.t("auth.login.generic_error");
 }
 
 export function LoginPage() {
@@ -46,7 +47,7 @@ export function LoginPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-sm flex flex-col gap-4 bg-neutral-900 border border-neutral-800 rounded-lg p-6"
       >
-        <h2 className="text-xl font-medium text-center">Entrar</h2>
+        <h2 className="text-xl font-medium text-center">{t("auth.login.heading")}</h2>
 
         {error && (
           <div className="text-sm text-red-400 bg-red-950/40 border border-red-500 rounded-md px-3 py-2">
@@ -55,7 +56,7 @@ export function LoginPage() {
         )}
 
         <label className="flex flex-col gap-1 text-sm">
-          Email
+          {t("auth.login.email")}
           <input
             type="email"
             required
@@ -66,7 +67,7 @@ export function LoginPage() {
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Senha
+          {t("auth.login.password")}
           <input
             type="password"
             required
@@ -81,13 +82,13 @@ export function LoginPage() {
           disabled={isSubmitting}
           className="mt-2 rounded-md bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-2 font-medium"
         >
-          {isSubmitting ? "Entrando..." : "Entrar"}
+          {isSubmitting ? t("auth.login.submitting") : t("auth.login.submit")}
         </button>
 
         <p className="text-sm text-neutral-400 text-center">
-          Não tem conta?{" "}
+          {t("auth.login.no_account")}{" "}
           <Link to="/signup" className="text-purple-400 hover:underline">
-            Cadastre-se
+            {t("auth.login.signup_link")}
           </Link>
         </p>
       </form>

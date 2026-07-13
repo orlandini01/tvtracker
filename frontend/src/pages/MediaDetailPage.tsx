@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getMediaDetail, getWatchProviders, type MediaType } from "../lib/media";
 import {
   deleteLibraryEntry,
   getLibraryEntry,
   upsertLibraryEntry,
-  STATUS_LABELS,
+  STATUS_LABEL_KEYS,
   type LibraryEntryUpdate,
   type WatchStatus,
 } from "../lib/library";
@@ -23,6 +24,7 @@ const STATUS_OPTIONS: WatchStatus[] = ["quero_assistir", "assistindo", "assistid
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
 
 export function MediaDetailPage() {
+  const { t } = useTranslation();
   const { mediaType, tmdbId } = useParams<{ mediaType: string; tmdbId: string }>();
   const type = mediaType as MediaType;
   const id = Number(tmdbId);
@@ -139,14 +141,14 @@ export function MediaDetailPage() {
   }
 
   if (detailQuery.isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">Carregando...</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">{t("mediaDetail.loading")}</div>;
   }
 
   if (detailQuery.isError || !detailQuery.data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-neutral-950 text-neutral-100">
-        <p className="text-red-400">Não foi possível carregar este título.</p>
-        <Link to="/" className="text-purple-400 hover:underline">Voltar</Link>
+        <p className="text-red-400">{t("mediaDetail.not_found")}</p>
+        <Link to="/" className="text-purple-400 hover:underline">{t("mediaDetail.back")}</Link>
       </div>
     );
   }
@@ -183,11 +185,11 @@ export function MediaDetailPage() {
           {media.poster_url ? (
             <img src={media.poster_url} alt={media.title} className="w-full h-full object-cover" />
           ) : (
-            <div className="aspect-[2/3] flex items-center justify-center text-xs text-neutral-500">Sem pôster</div>
+            <div className="aspect-[2/3] flex items-center justify-center text-xs text-neutral-500">{t("mediaCard.no_poster")}</div>
           )}
         </div>
         <div className="flex-1 pt-2 sm:pt-24">
-          <Link to="/" className="text-sm text-purple-400 hover:underline">← Voltar</Link>
+          <Link to="/" className="text-sm text-purple-400 hover:underline">{t("mediaDetail.back")}</Link>
 
           <div className="flex items-start justify-between gap-3 mt-2">
             <h1 className="text-3xl font-semibold">
@@ -196,7 +198,7 @@ export function MediaDetailPage() {
             <button
               onClick={toggleFavorite}
               disabled={upsertMutation.isPending}
-              title={entry?.is_favorite ? "Remover dos favoritos" : "Favoritar"}
+              title={entry?.is_favorite ? t("mediaDetail.favorite_remove_title") : t("mediaDetail.favorite_add_title")}
               className={`shrink-0 rounded-full border px-3 py-2 text-lg leading-none ${
                 entry?.is_favorite ? "bg-pink-600 border-pink-500" : "border-neutral-700 hover:border-pink-500"
               }`}
@@ -212,15 +214,15 @@ export function MediaDetailPage() {
           </div>
 
           <p className="text-sm text-neutral-400 mt-3">
-            {media.media_type === "movie" ? "Filme" : "Série"}
+            {media.media_type === "movie" ? t("mediaDetail.type_movie") : t("mediaDetail.type_tv")}
             {media.runtime ? ` · ${media.runtime} min` : ""}
             {media.vote_average ? ` · ⭐ ${media.vote_average.toFixed(1)} (TMDB)` : ""}
           </p>
 
-          <p className="mt-4 leading-relaxed text-neutral-200">{media.overview || "Sem sinopse disponível."}</p>
+          <p className="mt-4 leading-relaxed text-neutral-200">{media.overview || t("mediaDetail.no_synopsis")}</p>
 
           <div className="mt-6">
-            <h2 className="text-sm font-medium text-neutral-400 mb-2">Meu status</h2>
+            <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.my_status")}</h2>
             <div className="flex flex-wrap gap-2">
               {STATUS_OPTIONS.map((s) => (
                 <button
@@ -231,21 +233,21 @@ export function MediaDetailPage() {
                     entry?.status === s ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
                   }`}
                 >
-                  {STATUS_LABELS[s]}
+                  {t(STATUS_LABEL_KEYS[s])}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="mt-4">
-            <h2 className="text-sm font-medium text-neutral-400 mb-2">Minha nota</h2>
+            <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.my_rating")}</h2>
             <div className="flex flex-wrap gap-1">
               {RATING_OPTIONS.map((n) => (
                 <button
                   key={n}
                   onClick={() => setRating(n)}
                   disabled={upsertMutation.isPending}
-                  title={`Nota ${n}`}
+                  title={t("mediaDetail.rating_title", { n })}
                   className={`w-8 h-8 rounded-md border text-sm ${
                     entry?.rating === n ? "bg-yellow-500 border-yellow-400 text-neutral-900 font-semibold" : "border-neutral-700 hover:border-neutral-500"
                   }`}
@@ -262,17 +264,17 @@ export function MediaDetailPage() {
               disabled={deleteMutation.isPending}
               className="mt-4 text-sm text-red-400 hover:underline"
             >
-              Remover da minha lista
+              {t("mediaDetail.remove_from_list")}
             </button>
           )}
 
           {isTv && media.seasons && media.seasons.length > 0 && (
             <div className="mt-6">
               <div className="flex items-center justify-between gap-2 mb-2">
-                <h2 className="text-sm font-medium text-neutral-400">Episódios</h2>
+                <h2 className="text-sm font-medium text-neutral-400">{t("mediaDetail.episodes")}</h2>
                 {progressQuery.data && (
                   <span className="text-xs text-neutral-500">
-                    {progressQuery.data.watched_count}/{progressQuery.data.total_count} assistidos
+                    {t("mediaDetail.watched_count", { watched: progressQuery.data.watched_count, total: progressQuery.data.total_count })}
                   </span>
                 )}
               </div>
@@ -293,8 +295,8 @@ export function MediaDetailPage() {
                 ))}
               </div>
 
-              {seasonQuery.isLoading && <p className="text-sm text-neutral-500">Carregando episódios...</p>}
-              {seasonQuery.isError && <p className="text-sm text-red-400">Não foi possível carregar os episódios.</p>}
+              {seasonQuery.isLoading && <p className="text-sm text-neutral-500">{t("mediaDetail.loading_episodes")}</p>}
+              {seasonQuery.isError && <p className="text-sm text-red-400">{t("mediaDetail.episodes_error")}</p>}
 
               {seasonQuery.data && (
                 <>
@@ -303,7 +305,7 @@ export function MediaDetailPage() {
                     disabled={markSeasonMutation.isPending}
                     className="mb-3 text-xs text-purple-400 hover:underline"
                   >
-                    Marcar temporada inteira como assistida
+                    {t("mediaDetail.mark_season_watched")}
                   </button>
 
                   <ul className="flex flex-col gap-2">
@@ -315,7 +317,7 @@ export function MediaDetailPage() {
                         <button
                           onClick={() => toggleEpisode(ep.episode_number, ep.watched)}
                           disabled={markEpisodeMutation.isPending || unmarkEpisodeMutation.isPending}
-                          title={ep.watched ? "Marcar como não assistido" : "Marcar como assistido"}
+                          title={ep.watched ? t("mediaDetail.mark_unwatched_title") : t("mediaDetail.mark_watched_title")}
                           className={`shrink-0 w-6 h-6 rounded-md border flex items-center justify-center text-xs ${
                             ep.watched ? "bg-purple-600 border-purple-500" : "border-neutral-600 hover:border-neutral-400"
                           }`}
@@ -340,9 +342,9 @@ export function MediaDetailPage() {
           )}
 
           <div className="mt-6">
-            <h2 className="text-sm font-medium text-neutral-400 mb-2">Onde assistir ({providers?.region ?? "BR"})</h2>
-            {providersQuery.isLoading && <p className="text-sm text-neutral-500">Carregando...</p>}
-            {!providersQuery.isLoading && !hasProviders && <p className="text-sm text-neutral-500">Nenhuma plataforma encontrada para esta região.</p>}
+            <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.where_to_watch", { region: providers?.region ?? "BR" })}</h2>
+            {providersQuery.isLoading && <p className="text-sm text-neutral-500">{t("mediaDetail.providers_loading")}</p>}
+            {!providersQuery.isLoading && !hasProviders && <p className="text-sm text-neutral-500">{t("mediaDetail.providers_empty")}</p>}
             {hasProviders && (
               <div className="flex flex-wrap gap-3">
                 {[...providers!.flatrate, ...providers!.rent, ...providers!.buy].map((p, idx) => (
@@ -356,13 +358,13 @@ export function MediaDetailPage() {
           </div>
 
           <div className="mt-8">
-            <h2 className="text-sm font-medium text-neutral-400 mb-2">Comentários</h2>
+            <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.comments")}</h2>
             <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-4">
               <input
                 type="text"
                 value={commentInput}
                 onChange={(e) => setCommentInput(e.target.value)}
-                placeholder="Escreva um comentário..."
+                placeholder={t("mediaDetail.comment_placeholder")}
                 maxLength={1000}
                 className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
               />
@@ -371,14 +373,14 @@ export function MediaDetailPage() {
                 disabled={postCommentMutation.isPending || !commentInput.trim()}
                 className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium"
               >
-                Comentar
+                {t("mediaDetail.comment_submit")}
               </button>
             </form>
 
-            {commentsQuery.isLoading && <p className="text-sm text-neutral-500">Carregando comentários...</p>}
-            {commentsQuery.isError && <p className="text-sm text-red-400">Não foi possível carregar os comentários.</p>}
+            {commentsQuery.isLoading && <p className="text-sm text-neutral-500">{t("mediaDetail.comments_loading")}</p>}
+            {commentsQuery.isError && <p className="text-sm text-red-400">{t("mediaDetail.comments_error")}</p>}
             {commentsQuery.data && commentsQuery.data.length === 0 && (
-              <p className="text-sm text-neutral-500">Nenhum comentário ainda. Seja o primeiro!</p>
+              <p className="text-sm text-neutral-500">{t("mediaDetail.comments_empty")}</p>
             )}
 
             <ul className="flex flex-col gap-3">
@@ -392,7 +394,7 @@ export function MediaDetailPage() {
                         disabled={deleteCommentMutation.isPending}
                         className="text-xs text-red-400 hover:underline"
                       >
-                        Remover
+                        {t("mediaDetail.comment_remove")}
                       </button>
                     )}
                   </div>
@@ -404,7 +406,7 @@ export function MediaDetailPage() {
         </div>
       </div>
       <footer className="px-6 py-4 text-center text-xs text-neutral-600">
-        Dados fornecidos por TMDB. Este produto usa a API do TMDB, mas não é endossado ou certificado pelo TMDB.
+        {t("home.footer_tmdb")}
       </footer>
     </div>
   );

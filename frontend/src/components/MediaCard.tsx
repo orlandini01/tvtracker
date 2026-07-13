@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { MediaSummary } from "../lib/media";
 
 export function MediaCard({ item }: { item: MediaSummary }) {
+  const { t } = useTranslation();
   const year = item.release_date?.slice(0, 4);
 
   return (
@@ -18,7 +20,7 @@ export function MediaCard({ item }: { item: MediaSummary }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform"
           />
         ) : (
-          <span className="text-xs text-neutral-500 px-2 text-center">Sem pôster</span>
+          <span className="text-xs text-neutral-500 px-2 text-center">{t("mediaCard.no_poster")}</span>
         )}
       </div>
       <div className="px-2 pb-2">
@@ -26,7 +28,7 @@ export function MediaCard({ item }: { item: MediaSummary }) {
           {item.title}
         </p>
         <p className="text-xs text-neutral-500">
-          {year ?? "—"} {item.media_type === "tv" ? "· Série" : "· Filme"}
+          {year ?? "—"} · {item.media_type === "tv" ? t("mediaCard.tv") : t("mediaCard.movie")}
         </p>
       </div>
     </Link>

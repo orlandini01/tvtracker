@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 import {
   acceptFriendRequest,
   declineOrCancelRequest,
@@ -12,14 +14,15 @@ import {
   type RelationshipStatus,
 } from "../lib/friends";
 
-const RELATIONSHIP_LABELS: Record<RelationshipStatus, string> = {
+const RELATIONSHIP_LABEL_KEYS: Record<RelationshipStatus, string> = {
   none: "",
-  friends: "Amigos",
-  pending_outgoing: "Pedido enviado",
-  pending_incoming: "Te chamou",
+  friends: "friends.relationship_friends",
+  pending_outgoing: "friends.relationship_pending_outgoing",
+  pending_incoming: "friends.relationship_pending_incoming",
 };
 
 export function FriendsPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
@@ -59,7 +62,7 @@ export function FriendsPage() {
       invalidateAll();
     },
     onError: (err: any) => {
-      setFeedback(err?.response?.data?.detail ?? "Não foi possível enviar o pedido.");
+      setFeedback(err?.response?.data?.detail ?? i18n.t("friends.send_error"));
     },
   });
 
@@ -90,36 +93,36 @@ export function FriendsPage() {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
-        <h1 className="text-2xl font-semibold">Amigos</h1>
-        <Link to="/" className="text-sm text-purple-400 hover:underline">← Descobrir</Link>
+        <h1 className="text-2xl font-semibold">{t("friends.title")}</h1>
+        <Link to="/" className="text-sm text-purple-400 hover:underline">{t("common.back_discover")}</Link>
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto flex flex-col gap-8">
         <section>
-          <h2 className="text-sm font-medium text-neutral-400 mb-2">Buscar por username</h2>
+          <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("friends.search_heading")}</h2>
           <form onSubmit={handleSearchSubmit} className="flex gap-2 mb-3">
             <input
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="username do seu amigo..."
+              placeholder={t("friends.search_placeholder")}
               className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
             />
             <button type="submit" className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium">
-              Buscar
+              {t("friends.search_button")}
             </button>
           </form>
 
           {feedback && <p className="text-sm text-red-400 mb-2">{feedback}</p>}
 
-          {searchQuery.isFetching && <p className="text-sm text-neutral-500">Buscando...</p>}
+          {searchQuery.isFetching && <p className="text-sm text-neutral-500">{t("friends.searching")}</p>}
           {searchQuery.isError && (
             <p className="text-sm text-red-400">
-              Não foi possível buscar agora. Tenta de novo em alguns segundos.
+              {t("friends.search_error")}
             </p>
           )}
           {searchQuery.data && searchQuery.data.length === 0 && (
-            <p className="text-sm text-neutral-500">Nenhum usuário encontrado.</p>
+            <p className="text-sm text-neutral-500">{t("friends.no_users_found")}</p>
           )}
           <ul className="flex flex-col gap-2">
             {searchQuery.data?.map((u) => (
@@ -131,10 +134,10 @@ export function FriendsPage() {
                     disabled={sendMutation.isPending}
                     className="rounded-md bg-purple-600 hover:bg-purple-500 px-3 py-1 text-xs font-medium"
                   >
-                    Adicionar
+                    {t("friends.add_button")}
                   </button>
                 ) : (
-                  <span className="text-xs text-neutral-500">{RELATIONSHIP_LABELS[u.relationship_status]}</span>
+                  <span className="text-xs text-neutral-500">{t(RELATIONSHIP_LABEL_KEYS[u.relationship_status])}</span>
                 )}
               </li>
             ))}
@@ -142,8 +145,8 @@ export function FriendsPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-medium text-neutral-400 mb-2">Pedidos recebidos</h2>
-          {incoming.length === 0 && <p className="text-sm text-neutral-500">Nenhum pedido pendente.</p>}
+          <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("friends.incoming_heading")}</h2>
+          {incoming.length === 0 && <p className="text-sm text-neutral-500">{t("friends.no_incoming")}</p>}
           <ul className="flex flex-col gap-2">
             {incoming.map((req) => (
               <li key={req.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
@@ -154,14 +157,14 @@ export function FriendsPage() {
                     disabled={acceptMutation.isPending}
                     className="rounded-md bg-purple-600 hover:bg-purple-500 px-3 py-1 text-xs font-medium"
                   >
-                    Aceitar
+                    {t("friends.accept")}
                   </button>
                   <button
                     onClick={() => declineMutation.mutate(req.id)}
                     disabled={declineMutation.isPending}
                     className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1 text-xs"
                   >
-                    Recusar
+                    {t("friends.decline")}
                   </button>
                 </div>
               </li>
@@ -170,8 +173,8 @@ export function FriendsPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-medium text-neutral-400 mb-2">Pedidos enviados</h2>
-          {outgoing.length === 0 && <p className="text-sm text-neutral-500">Nenhum pedido enviado.</p>}
+          <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("friends.outgoing_heading")}</h2>
+          {outgoing.length === 0 && <p className="text-sm text-neutral-500">{t("friends.no_outgoing")}</p>}
           <ul className="flex flex-col gap-2">
             {outgoing.map((req) => (
               <li key={req.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
@@ -181,7 +184,7 @@ export function FriendsPage() {
                   disabled={declineMutation.isPending}
                   className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1 text-xs"
                 >
-                  Cancelar
+                  {t("friends.cancel")}
                 </button>
               </li>
             ))}
@@ -189,8 +192,8 @@ export function FriendsPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-medium text-neutral-400 mb-2">Meus amigos</h2>
-          {friends.length === 0 && <p className="text-sm text-neutral-500">Você ainda não tem amigos adicionados.</p>}
+          <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("friends.my_friends_heading")}</h2>
+          {friends.length === 0 && <p className="text-sm text-neutral-500">{t("friends.no_friends")}</p>}
           <ul className="flex flex-col gap-2">
             {friends.map((f) => (
               <li key={f.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
@@ -200,14 +203,14 @@ export function FriendsPage() {
                     to={`/amigos/${f.id}/comparar`}
                     className="rounded-md border border-neutral-700 hover:border-purple-500 hover:text-purple-400 px-3 py-1 text-xs"
                   >
-                    Comparar
+                    {t("friends.compare_link")}
                   </Link>
                   <button
                     onClick={() => removeMutation.mutate(f.id)}
                     disabled={removeMutation.isPending}
                     className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1 text-xs"
                   >
-                    Remover
+                    {t("friends.remove_button")}
                   </button>
                 </div>
               </li>

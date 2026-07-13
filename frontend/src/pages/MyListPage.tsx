@@ -1,21 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { listLibrary, STATUS_LABELS, type WatchStatus } from "../lib/library";
+import { useTranslation } from "react-i18next";
+import { listLibrary, STATUS_LABEL_KEYS, type WatchStatus } from "../lib/library";
 import { MediaCard } from "../components/MediaCard";
 
 type FilterValue = "all" | "favorites" | WatchStatus;
 
-const FILTERS: { value: FilterValue; label: string }[] = [
-  { value: "all", label: "Tudo" },
-  { value: "favorites", label: "Favoritos" },
-  { value: "quero_assistir", label: STATUS_LABELS.quero_assistir },
-  { value: "assistindo", label: STATUS_LABELS.assistindo },
-  { value: "assistido", label: STATUS_LABELS.assistido },
-  { value: "abandonei", label: STATUS_LABELS.abandonei },
+const FILTERS: { value: FilterValue; labelKey: string }[] = [
+  { value: "all", labelKey: "myList.filter_all" },
+  { value: "favorites", labelKey: "myList.filter_favorites" },
+  { value: "quero_assistir", labelKey: STATUS_LABEL_KEYS.quero_assistir },
+  { value: "assistindo", labelKey: STATUS_LABEL_KEYS.assistindo },
+  { value: "assistido", labelKey: STATUS_LABEL_KEYS.assistido },
+  { value: "abandonei", labelKey: STATUS_LABEL_KEYS.abandonei },
 ];
 
 export function MyListPage() {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<FilterValue>("all");
 
   const query = useQuery({
@@ -33,8 +35,8 @@ export function MyListPage() {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
-        <h1 className="text-2xl font-semibold">Minha lista</h1>
-        <Link to="/" className="text-sm text-purple-400 hover:underline">← Descobrir</Link>
+        <h1 className="text-2xl font-semibold">{t("myList.title")}</h1>
+        <Link to="/" className="text-sm text-purple-400 hover:underline">{t("common.back_discover")}</Link>
       </header>
 
       <main className="px-6 py-6">
@@ -47,15 +49,15 @@ export function MyListPage() {
                 filter === f.value ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
               }`}
             >
-              {f.label}
+              {t(f.labelKey)}
             </button>
           ))}
         </div>
 
-        {query.isLoading && <p className="text-neutral-400 text-sm">Carregando...</p>}
-        {query.isError && <p className="text-red-400 text-sm">Não foi possível carregar sua lista.</p>}
+        {query.isLoading && <p className="text-neutral-400 text-sm">{t("myList.loading")}</p>}
+        {query.isError && <p className="text-red-400 text-sm">{t("myList.error")}</p>}
         {query.data && query.data.length === 0 && (
-          <p className="text-neutral-400 text-sm">Nada por aqui ainda — favorite ou marque um status em algum título.</p>
+          <p className="text-neutral-400 text-sm">{t("myList.empty")}</p>
         )}
 
         {query.data && query.data.length > 0 && (
