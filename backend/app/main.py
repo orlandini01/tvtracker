@@ -12,6 +12,7 @@ from app.api.library import router as library_router
 from app.api.media import router as media_router
 from app.api.notifications import router as notifications_router
 from app.api.routes import router as health_router
+from app.api.wrapped import router as wrapped_router
 from app.core.config import settings
 
 app = FastAPI(title="TrackerTV API", version="0.1.0", description="Backend do tracker de séries/filmes estilo TV Time.")
@@ -36,3 +37,4 @@ app.include_router(friends_router)
 app.include_router(feed_router)
 app.include_router(comments_router)
 app.include_router(notifications_router)
+app.include_router(wrapped_router)

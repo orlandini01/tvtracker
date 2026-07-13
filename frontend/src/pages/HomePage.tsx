@@ -179,6 +179,9 @@ export function HomePage() {
             ))}
           </div>
           <NotificationBell />
+          <Link to="/wrapped" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+            Wrapped
+          </Link>
           <Link to="/feed" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
             Feed
           </Link>

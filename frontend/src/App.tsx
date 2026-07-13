@@ -7,6 +7,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { MediaDetailPage } from "./pages/MediaDetailPage";
 import { MyListPage } from "./pages/MyListPage";
 import { SignupPage } from "./pages/SignupPage";
+import { WrappedPage } from "./pages/WrappedPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
       <Route path="/amigos" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
       <Route path="/amigos/:friendId/comparar" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
       <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
+      <Route path="/wrapped" element={<ProtectedRoute><WrappedPage /></ProtectedRoute>} />
       <Route path="/media/:mediaType/:tmdbId" element={<ProtectedRoute><MediaDetailPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
