@@ -3,6 +3,8 @@ import { ComparePage } from "./pages/ComparePage";
 import { FeedPage } from "./pages/FeedPage";
 import { FriendsPage } from "./pages/FriendsPage";
 import { HomePage } from "./pages/HomePage";
+import { ListDetailPage } from "./pages/ListDetailPage";
+import { ListsPage } from "./pages/ListsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MediaDetailPage } from "./pages/MediaDetailPage";
 import { MyListPage } from "./pages/MyListPage";
@@ -17,6 +19,8 @@ function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
       <Route path="/minha-lista" element={<ProtectedRoute><MyListPage /></ProtectedRoute>} />
+      <Route path="/listas" element={<ProtectedRoute><ListsPage /></ProtectedRoute>} />
+      <Route path="/listas/:listId" element={<ProtectedRoute><ListDetailPage /></ProtectedRoute>} />
       <Route path="/amigos" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
       <Route path="/amigos/:friendId/comparar" element={<ProtectedRoute><ComparePage /></ProtectedRoute>} />
       <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />

@@ -23,6 +23,7 @@
   "nav.feed": "Feed",
   "nav.friends": "Friends",
   "nav.my_list": "My List",
+  "nav.custom_lists": "Lists",
   "nav.wrapped": "Wrapped",
   "nav.logout": "Log out",
 
@@ -111,6 +112,9 @@
   "mediaDetail.comments_error": "Could not load the comments.",
   "mediaDetail.comments_empty": "No comments yet. Be the first!",
   "mediaDetail.comment_remove": "Remove",
+  "mediaDetail.custom_lists_heading": "My lists",
+  "mediaDetail.manage_lists_link": "Manage lists",
+  "mediaDetail.no_custom_lists": "You haven't created any lists yet.",
 
   "myList.title": "My list",
   "myList.filter_all": "All",
@@ -194,5 +198,23 @@
   "notifications.mark_all_read": "Mark all as read",
   "notifications.loading": "Loading...",
   "notifications.error": "Could not load.",
-  "notifications.empty": "No notifications yet."
+  "notifications.empty": "No notifications yet.",
+
+  "lists.title": "My lists",
+  "lists.new_list_placeholder": "New list name...",
+  "lists.create_button": "Create",
+  "lists.create_error": "Could not create the list.",
+  "lists.loading": "Loading...",
+  "lists.error": "Could not load your lists.",
+  "lists.empty": "You haven't created any lists yet.",
+  "lists.item_count_one": "{{count}} title",
+  "lists.item_count_other": "{{count}} titles",
+  "lists.not_found": "Could not load this list.",
+  "lists.back": "← My lists",
+  "lists.save_name": "Save",
+  "lists.rename_button": "Rename",
+  "lists.delete_button": "Delete list",
+  "lists.delete_confirm": "Are you sure you want to delete this list? This can't be undone.",
+  "lists.detail_empty": "No titles in this list yet.",
+  "lists.remove_item": "Remove"
 }

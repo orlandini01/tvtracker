@@ -211,6 +211,9 @@ export function HomePage() {
           <Link to="/minha-lista" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
             {t("nav.my_list")}
           </Link>
+          <Link to="/listas" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+            {t("nav.custom_lists")}
+          </Link>
           {user && <span className="text-sm text-neutral-400 hidden sm:inline">{user.username}</span>}
           <button onClick={() => logout()} className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm">
             {t("nav.logout")}

@@ -21,9 +21,53 @@ import {
   rateEpisode,
   unmarkEpisodeWatched,
 } from "../lib/episodes";
+import { addListItem, getListDetail, getLists, removeListItem, type CustomListSummary } from "../lib/lists";
 
 const STATUS_OPTIONS: WatchStatus[] = ["quero_assistir", "assistindo", "assistido", "abandonei"];
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
+
+function ListMembershipRow({ list, mediaType, tmdbId }: { list: CustomListSummary; mediaType: MediaType; tmdbId: number }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const detailQuery = useQuery({
+    queryKey: ["custom-list", list.id],
+    queryFn: () => getListDetail(list.id),
+  });
+
+  const isMember = detailQuery.data?.items.some((i) => i.media_type === mediaType && i.tmdb_id === tmdbId) ?? false;
+
+  function invalidate() {
+    queryClient.invalidateQueries({ queryKey: ["custom-list", list.id] });
+    queryClient.invalidateQueries({ queryKey: ["custom-lists"] });
+  }
+
+  const addMutation = useMutation({
+    mutationFn: () => addListItem(list.id, mediaType, tmdbId),
+    onSuccess: invalidate,
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: () => removeListItem(list.id, mediaType, tmdbId),
+    onSuccess: invalidate,
+  });
+
+  const pending = addMutation.isPending || removeMutation.isPending || detailQuery.isLoading;
+
+  return (
+    <label className="flex items-center gap-2 rounded-md border border-neutral-800 px-3 py-2 cursor-pointer hover:border-neutral-600">
+      <input
+        type="checkbox"
+        checked={isMember}
+        disabled={pending}
+        onChange={() => (isMember ? removeMutation.mutate() : addMutation.mutate())}
+        className="accent-purple-600"
+      />
+      <span className="text-sm flex-1">{list.name}</span>
+      {pending && <span className="text-xs text-neutral-500">{t("common.loading")}</span>}
+    </label>
+  );
+}
 
 export function MediaDetailPage() {
   const { t } = useTranslation();
@@ -43,6 +87,12 @@ export function MediaDetailPage() {
   const providersQuery = useQuery({
     queryKey: ["media-providers", type, id],
     queryFn: () => getWatchProviders(type, id, "BR"),
+    enabled,
+  });
+
+  const customListsQuery = useQuery({
+    queryKey: ["custom-lists"],
+    queryFn: getLists,
     enabled,
   });
 
@@ -288,6 +338,22 @@ export function MediaDetailPage() {
               {t("mediaDetail.remove_from_list")}
             </button>
           )}
+
+          <div className="mt-6">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h2 className="text-sm font-medium text-neutral-400">{t("mediaDetail.custom_lists_heading")}</h2>
+              <Link to="/listas" className="text-xs text-purple-400 hover:underline">{t("mediaDetail.manage_lists_link")}</Link>
+            </div>
+            {customListsQuery.isLoading && <p className="text-xs text-neutral-500">{t("lists.loading")}</p>}
+            {customListsQuery.data && customListsQuery.data.length === 0 && (
+              <p className="text-xs text-neutral-500">{t("mediaDetail.no_custom_lists")}</p>
+            )}
+            <div className="flex flex-col gap-2">
+              {customListsQuery.data?.map((list) => (
+                <ListMembershipRow key={list.id} list={list} mediaType={type} tmdbId={id} />
+              ))}
+            </div>
+          </div>
 
           {isTv && media.seasons && media.seasons.length > 0 && (
             <div className="mt-6">

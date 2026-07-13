@@ -23,6 +23,7 @@
   "nav.feed": "Feed",
   "nav.friends": "Amici",
   "nav.my_list": "La mia lista",
+  "nav.custom_lists": "Liste",
   "nav.wrapped": "Wrapped",
   "nav.logout": "Esci",
 
@@ -111,6 +112,9 @@
   "mediaDetail.comments_error": "Impossibile caricare i commenti.",
   "mediaDetail.comments_empty": "Ancora nessun commento. Sii il primo!",
   "mediaDetail.comment_remove": "Rimuovi",
+  "mediaDetail.custom_lists_heading": "Le mie liste",
+  "mediaDetail.manage_lists_link": "Gestisci liste",
+  "mediaDetail.no_custom_lists": "Non hai ancora creato nessuna lista.",
 
   "myList.title": "La mia lista",
   "myList.filter_all": "Tutti",
@@ -194,5 +198,23 @@
   "notifications.mark_all_read": "Segna tutte come lette",
   "notifications.loading": "Caricamento...",
   "notifications.error": "Impossibile caricare.",
-  "notifications.empty": "Ancora nessuna notifica."
+  "notifications.empty": "Ancora nessuna notifica.",
+
+  "lists.title": "Le mie liste",
+  "lists.new_list_placeholder": "Nome della nuova lista...",
+  "lists.create_button": "Crea",
+  "lists.create_error": "Impossibile creare la lista.",
+  "lists.loading": "Caricamento...",
+  "lists.error": "Impossibile caricare le tue liste.",
+  "lists.empty": "Non hai ancora creato nessuna lista.",
+  "lists.item_count_one": "{{count}} titolo",
+  "lists.item_count_other": "{{count}} titoli",
+  "lists.not_found": "Impossibile caricare questa lista.",
+  "lists.back": "← Le mie liste",
+  "lists.save_name": "Salva",
+  "lists.rename_button": "Rinomina",
+  "lists.delete_button": "Elimina lista",
+  "lists.delete_confirm": "Sei sicuro di voler eliminare questa lista? Questa azione non può essere annullata.",
+  "lists.detail_empty": "Ancora nessun titolo in questa lista.",
+  "lists.remove_item": "Rimuovi"
 }

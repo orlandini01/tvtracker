@@ -14,6 +14,8 @@ from app.models.activity import Activity
 from app.models.comment import Comment
 from app.models.watched_episode import WatchedEpisode
 from app.models.notification import Notification
+from app.models.custom_list import CustomList
+from app.models.custom_list_item import CustomListItem
 
 config = context.config
 if config.config_file_name is not None:

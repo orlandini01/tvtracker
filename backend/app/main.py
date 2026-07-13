@@ -9,6 +9,7 @@ from app.api.episodes import router as episodes_router
 from app.api.feed import router as feed_router
 from app.api.friends import router as friends_router
 from app.api.library import router as library_router
+from app.api.lists import router as lists_router
 from app.api.media import router as media_router
 from app.api.notifications import router as notifications_router
 from app.api.recommendations import router as recommendations_router
@@ -40,3 +41,4 @@ app.include_router(comments_router)
 app.include_router(notifications_router)
 app.include_router(wrapped_router)
 app.include_router(recommendations_router)
+app.include_router(lists_router)
