@@ -21,24 +21,29 @@ import {
   rateEpisode,
   unmarkEpisodeWatched,
 } from "../lib/episodes";
-import { addListItem, getListDetail, getLists, removeListItem, type CustomListSummary } from "../lib/lists";
+import { addListItem, getListMembership, getLists, removeListItem, type CustomListSummary } from "../lib/lists";
 
 const STATUS_OPTIONS: WatchStatus[] = ["quero_assistir", "assistindo", "assistido", "abandonei"];
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
 
-function ListMembershipRow({ list, mediaType, tmdbId }: { list: CustomListSummary; mediaType: MediaType; tmdbId: number }) {
+function ListMembershipRow({
+  list,
+  mediaType,
+  tmdbId,
+  isMember,
+  membershipLoading,
+}: {
+  list: CustomListSummary;
+  mediaType: MediaType;
+  tmdbId: number;
+  isMember: boolean;
+  membershipLoading: boolean;
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const detailQuery = useQuery({
-    queryKey: ["custom-list", list.id],
-    queryFn: () => getListDetail(list.id),
-  });
-
-  const isMember = detailQuery.data?.items.some((i) => i.media_type === mediaType && i.tmdb_id === tmdbId) ?? false;
-
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: ["custom-list", list.id] });
+    queryClient.invalidateQueries({ queryKey: ["list-membership", mediaType, tmdbId] });
     queryClient.invalidateQueries({ queryKey: ["custom-lists"] });
   }
 
@@ -52,7 +57,7 @@ function ListMembershipRow({ list, mediaType, tmdbId }: { list: CustomListSummar
     onSuccess: invalidate,
   });
 
-  const pending = addMutation.isPending || removeMutation.isPending || detailQuery.isLoading;
+  const pending = addMutation.isPending || removeMutation.isPending || membershipLoading;
 
   return (
     <label className="flex items-center gap-2 rounded-md border border-neutral-800 px-3 py-2 cursor-pointer hover:border-neutral-600">
@@ -82,12 +87,16 @@ export function MediaDetailPage() {
     queryKey: ["media-detail", type, id],
     queryFn: () => getMediaDetail(type, id),
     enabled,
+    // Sinopse/gêneros/elenco praticamente não mudam — cacheia por mais
+    // tempo pra abrir instantâneo ao voltar num título já visitado.
+    staleTime: 10 * 60 * 1000,
   });
 
   const providersQuery = useQuery({
     queryKey: ["media-providers", type, id],
     queryFn: () => getWatchProviders(type, id, "BR"),
     enabled,
+    staleTime: 10 * 60 * 1000,
   });
 
   const customListsQuery = useQuery({
@@ -95,6 +104,13 @@ export function MediaDetailPage() {
     queryFn: getLists,
     enabled,
   });
+
+  const membershipQuery = useQuery({
+    queryKey: ["list-membership", type, id],
+    queryFn: () => getListMembership(type, id),
+    enabled,
+  });
+  const memberListIds = new Set(membershipQuery.data ?? []);
 
   const libraryQuery = useQuery({
     queryKey: ["library-entry", type, id],
@@ -219,7 +235,12 @@ export function MediaDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-neutral-950 text-neutral-100">
         <p className="text-red-400">{t("mediaDetail.not_found")}</p>
-        <Link to="/" className="text-purple-400 hover:underline">{t("mediaDetail.back")}</Link>
+        <Link
+          to="/"
+          className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm font-medium"
+        >
+          {t("mediaDetail.back")}
+        </Link>
       </div>
     );
   }
@@ -260,7 +281,12 @@ export function MediaDetailPage() {
           )}
         </div>
         <div className="flex-1 pt-2 sm:pt-24">
-          <Link to="/" className="text-sm text-purple-400 hover:underline">{t("mediaDetail.back")}</Link>
+          <Link
+            to="/"
+            className="inline-block rounded-md border border-neutral-700 bg-neutral-900/80 hover:border-purple-500 hover:bg-neutral-800 px-3 py-1.5 text-sm font-medium transition-colors"
+          >
+            {t("mediaDetail.back")}
+          </Link>
 
           <div className="flex items-start justify-between gap-3 mt-2">
             <h1 className="text-3xl font-semibold">
@@ -333,7 +359,7 @@ export function MediaDetailPage() {
             <button
               onClick={() => deleteMutation.mutate()}
               disabled={deleteMutation.isPending}
-              className="mt-4 text-sm text-red-400 hover:underline"
+              className="mt-4 rounded-md border border-red-900 text-red-400 hover:bg-red-950/50 hover:border-red-700 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
             >
               {t("mediaDetail.remove_from_list")}
             </button>
@@ -342,7 +368,12 @@ export function MediaDetailPage() {
           <div className="mt-6">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h2 className="text-sm font-medium text-neutral-400">{t("mediaDetail.custom_lists_heading")}</h2>
-              <Link to="/listas" className="text-xs text-purple-400 hover:underline">{t("mediaDetail.manage_lists_link")}</Link>
+              <Link
+                to="/listas"
+                className="rounded-md border border-neutral-700 hover:border-purple-500 px-2.5 py-1 text-xs font-medium transition-colors"
+              >
+                {t("mediaDetail.manage_lists_link")}
+              </Link>
             </div>
             {customListsQuery.isLoading && <p className="text-xs text-neutral-500">{t("lists.loading")}</p>}
             {customListsQuery.data && customListsQuery.data.length === 0 && (
@@ -350,7 +381,14 @@ export function MediaDetailPage() {
             )}
             <div className="flex flex-col gap-2">
               {customListsQuery.data?.map((list) => (
-                <ListMembershipRow key={list.id} list={list} mediaType={type} tmdbId={id} />
+                <ListMembershipRow
+                  key={list.id}
+                  list={list}
+                  mediaType={type}
+                  tmdbId={id}
+                  isMember={memberListIds.has(list.id)}
+                  membershipLoading={membershipQuery.isLoading}
+                />
               ))}
             </div>
           </div>
@@ -390,7 +428,7 @@ export function MediaDetailPage() {
                   <button
                     onClick={() => markSeasonMutation.mutate()}
                     disabled={markSeasonMutation.isPending}
-                    className="mb-3 text-xs text-purple-400 hover:underline"
+                    className="mb-3 rounded-md border border-purple-800 text-purple-300 hover:bg-purple-950/50 hover:border-purple-600 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
                   >
                     {t("mediaDetail.mark_season_watched")}
                   </button>

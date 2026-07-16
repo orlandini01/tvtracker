@@ -10,6 +10,7 @@ mudam pouco, então cacheamos por mais tempo; busca por texto e detalhe
 têm TTLs próprios. Se a escrita no cache falhar por qualquer motivo, isso
 nunca deve derrubar a resposta real ao usuário — só registra e segue.
 """
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
@@ -80,6 +81,14 @@ def _set_cache(db: Session, key: str, payload: dict[str, Any]) -> None:
         db.rollback()
 
 
+# Falhas transitórias (timeout, conexão recusada, erro 5xx passageiro do
+# TMDB) valem uma segunda tentativa antes de mostrar erro pro usuário — o
+# backoff é bem curto pra não fazer a página demorar visivelmente mais em
+# troca disso. Erros "definitivos" (404, 401, 4xx) nunca são retentados.
+_MAX_ATTEMPTS = 2
+_RETRY_BACKOFF_SECONDS = 0.4
+
+
 async def _get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
     if not settings.tmdb_api_key:
         raise TMDBError(status.HTTP_503_SERVICE_UNAVAILABLE, "TMDB_API_KEY não configurada no servidor")
@@ -87,20 +96,39 @@ async def _get(path: str, params: dict[str, Any] | None = None) -> dict[str, Any
     query = {"api_key": settings.tmdb_api_key, "language": "pt-BR", **(params or {})}
     url = f"{settings.tmdb_api_base_url}{path}"
 
-    try:
-        async with httpx.AsyncClient(timeout=8.0) as client:
-            response = await client.get(url, params=query)
-    except httpx.RequestError as exc:
-        raise TMDBError(status.HTTP_502_BAD_GATEWAY, "TMDB indisponível no momento") from exc
+    last_error: TMDBError | None = None
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        try:
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                response = await client.get(url, params=query)
+        except httpx.RequestError as exc:
+            last_error = TMDBError(status.HTTP_502_BAD_GATEWAY, "TMDB indisponível no momento")
+            if attempt < _MAX_ATTEMPTS:
+                await asyncio.sleep(_RETRY_BACKOFF_SECONDS)
+                continue
+            raise last_error from exc
 
-    if response.status_code == 404:
-        raise TMDBError(status.HTTP_404_NOT_FOUND, "Não encontrado no TMDB")
-    if response.status_code == 401:
-        raise TMDBError(status.HTTP_502_BAD_GATEWAY, "Chave do TMDB inválida ou expirada")
-    if response.status_code >= 400:
-        raise TMDBError(status.HTTP_502_BAD_GATEWAY, f"Erro do TMDB ({response.status_code})")
+        if response.status_code == 404:
+            raise TMDBError(status.HTTP_404_NOT_FOUND, "Não encontrado no TMDB")
+        if response.status_code == 401:
+            raise TMDBError(status.HTTP_502_BAD_GATEWAY, "Chave do TMDB inválida ou expirada")
+        if response.status_code >= 500:
+            # 5xx do lado do TMDB costuma ser passageiro — vale retry.
+            last_error = TMDBError(status.HTTP_502_BAD_GATEWAY, f"Erro do TMDB ({response.status_code})")
+            if attempt < _MAX_ATTEMPTS:
+                await asyncio.sleep(_RETRY_BACKOFF_SECONDS)
+                continue
+            raise last_error
+        if response.status_code >= 400:
+            # 4xx (exceto 404/401 já tratados acima) é erro do próprio
+            # request — repetir não muda o resultado.
+            raise TMDBError(status.HTTP_502_BAD_GATEWAY, f"Erro do TMDB ({response.status_code})")
 
-    return response.json()
+        return response.json()
+
+    # Inalcançável na prática (o loop sempre retorna ou levanta antes),
+    # mas satisfaz o type checker.
+    raise last_error or TMDBError(status.HTTP_502_BAD_GATEWAY, "TMDB indisponível no momento")
 
 
 def _map_summary(raw: dict[str, Any], media_type: MediaType) -> dict[str, Any]:

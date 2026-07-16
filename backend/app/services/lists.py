@@ -69,6 +69,24 @@ def delete_list(db: Session, user_id, list_id) -> None:
     db.commit()
 
 
+def get_membership(db: Session, user_id, media_type: MediaType, tmdb_id: int) -> list[str]:
+    """Em quais listas (do usuário) esse título já está — usado pela página
+    de detalhe pra desenhar os checkboxes num único request, em vez de
+    buscar o detalhe completo de cada lista (era um N+1: uma query por
+    lista só pra saber se o título tá lá dentro)."""
+    media = db.query(Media).filter_by(tmdb_id=tmdb_id, media_type=media_type).first()
+    if media is None:
+        return []
+
+    rows = (
+        db.query(CustomList.id)
+        .join(CustomListItem, CustomListItem.list_id == CustomList.id)
+        .filter(CustomList.user_id == user_id, CustomListItem.media_id == media.id)
+        .all()
+    )
+    return [str(row[0]) for row in rows]
+
+
 def list_lists(db: Session, user_id) -> list[dict]:
     rows = (
         db.query(CustomList, CustomListItem.id)

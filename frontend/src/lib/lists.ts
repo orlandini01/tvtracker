@@ -56,3 +56,13 @@ export async function removeListItem(listId: string, mediaType: MediaType, tmdbI
   const { data } = await api.delete<CustomListDetail>(`/lists/${listId}/items/${mediaType}/${tmdbId}`);
   return data;
 }
+
+// Em quais listas um título já está — 1 request no lugar de 1-por-lista
+// (era um N+1: a página de detalhe buscava o detalhe completo de cada
+// lista do usuário só pra saber se o checkbox devia vir marcado).
+export async function getListMembership(mediaType: MediaType, tmdbId: number): Promise<string[]> {
+  const { data } = await api.get<{ list_ids: string[] }>("/lists/membership", {
+    params: { media_type: mediaType, tmdb_id: tmdbId },
+  });
+  return data.list_ids;
+}

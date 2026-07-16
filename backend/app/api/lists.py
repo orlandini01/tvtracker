@@ -12,6 +12,7 @@ from app.schemas.lists import (
     CustomListOut,
     CustomListRename,
     CustomListsResponse,
+    ListMembershipResponse,
 )
 from app.services import lists as lists_service
 from app.services.lists import ListError
@@ -46,6 +47,18 @@ def create_list(
     except ListError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     return {"id": str(custom_list.id), "name": custom_list.name, "created_at": custom_list.created_at, "item_count": 0}
+
+
+@router.get("/membership", response_model=ListMembershipResponse)
+def get_membership(
+    media_type: Literal["movie", "tv"],
+    tmdb_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    # Precisa vir antes de /{list_id} na declaração das rotas, senão
+    # "membership" seria interpretado como um list_id.
+    return {"list_ids": lists_service.get_membership(db, current_user.id, media_type, tmdb_id)}
 
 
 @router.get("/{list_id}", response_model=CustomListDetailOut)

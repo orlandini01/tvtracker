@@ -38,6 +38,10 @@ class CustomListsResponse(BaseModel):
     results: list[CustomListOut]
 
 
+class ListMembershipResponse(BaseModel):
+    list_ids: list[str]
+
+
 class AddListItem(BaseModel):
     media_type: Literal["movie", "tv"]
     tmdb_id: int
