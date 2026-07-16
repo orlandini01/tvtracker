@@ -199,6 +199,9 @@ export function HomePage() {
             ))}
           </div>
           <NotificationBell />
+          <Link to="/calendario" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+            {t("nav.calendar")}
+          </Link>
           <Link to="/wrapped" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
             {t("nav.wrapped")}
           </Link>

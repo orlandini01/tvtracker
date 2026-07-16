@@ -188,6 +188,7 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
         runtime = episode_runtimes[0] if episode_runtimes else None
 
     seasons = None
+    next_episode_to_air = None
     if media_type == "tv":
         seasons = [
             {
@@ -198,6 +199,14 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
             for s in data.get("seasons", [])
             if s.get("season_number", 0) > 0  # exclui "Especiais" (season 0)
         ]
+        next_ep_raw = data.get("next_episode_to_air")
+        if next_ep_raw:
+            next_episode_to_air = {
+                "air_date": next_ep_raw.get("air_date"),
+                "season_number": next_ep_raw.get("season_number"),
+                "episode_number": next_ep_raw.get("episode_number"),
+                "name": next_ep_raw.get("name"),
+            }
 
     result = {
         **summary,
@@ -207,6 +216,7 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
         "number_of_seasons": data.get("number_of_seasons"),
         "status": data.get("status"),
         "seasons": seasons,
+        "next_episode_to_air": next_episode_to_air,
     }
 
     _set_cache(db, cache_key, result)

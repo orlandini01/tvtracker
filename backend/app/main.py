@@ -4,6 +4,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.api.auth import limiter, router as auth_router
+from app.api.calendar import router as calendar_router
 from app.api.comments import router as comments_router
 from app.api.episodes import router as episodes_router
 from app.api.feed import router as feed_router
@@ -42,3 +43,4 @@ app.include_router(notifications_router)
 app.include_router(wrapped_router)
 app.include_router(recommendations_router)
 app.include_router(lists_router)
+app.include_router(calendar_router)

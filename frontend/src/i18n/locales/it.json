@@ -24,6 +24,7 @@
   "nav.friends": "Amici",
   "nav.my_list": "La mia lista",
   "nav.custom_lists": "Liste",
+  "nav.calendar": "Calendario",
   "nav.wrapped": "Wrapped",
   "nav.logout": "Esci",
 
@@ -216,5 +217,13 @@
   "lists.delete_button": "Elimina lista",
   "lists.delete_confirm": "Sei sicuro di voler eliminare questa lista? Questa azione non può essere annullata.",
   "lists.detail_empty": "Ancora nessun titolo in questa lista.",
-  "lists.remove_item": "Rimuovi"
+  "lists.remove_item": "Rimuovi",
+
+  "calendar.title": "Calendario",
+  "calendar.subtitle": "Prossimi episodi e uscite dei titoli che segui.",
+  "calendar.loading": "Caricamento...",
+  "calendar.error": "Impossibile caricare il calendario.",
+  "calendar.empty": "Ancora niente qui. Aggiungi ai preferiti o segna un titolo come \"da vedere\"/\"in visione\" per vedere qui le prossime novità.",
+  "calendar.episode_label": "Stagione {{season}}, episodio {{episode}}",
+  "calendar.movie_release_label": "Uscita al cinema"
 }

@@ -24,6 +24,7 @@
   "nav.friends": "Friends",
   "nav.my_list": "My List",
   "nav.custom_lists": "Lists",
+  "nav.calendar": "Calendar",
   "nav.wrapped": "Wrapped",
   "nav.logout": "Log out",
 
@@ -216,5 +217,13 @@
   "lists.delete_button": "Delete list",
   "lists.delete_confirm": "Are you sure you want to delete this list? This can't be undone.",
   "lists.detail_empty": "No titles in this list yet.",
-  "lists.remove_item": "Remove"
+  "lists.remove_item": "Remove",
+
+  "calendar.title": "Calendar",
+  "calendar.subtitle": "Upcoming episodes and releases for the titles you track.",
+  "calendar.loading": "Loading...",
+  "calendar.error": "Could not load the calendar.",
+  "calendar.empty": "Nothing here yet. Favorite or mark a title as \"want to watch\"/\"watching\" to see upcoming releases here.",
+  "calendar.episode_label": "Season {{season}}, episode {{episode}}",
+  "calendar.movie_release_label": "Theatrical release"
 }
