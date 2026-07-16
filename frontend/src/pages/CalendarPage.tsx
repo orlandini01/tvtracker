@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { getCalendar, type CalendarItem } from "../lib/calendar";
+import { btnSecondary } from "../lib/buttonStyles";
 
 function formatDate(isoDate: string): string {
   const d = new Date(`${isoDate}T00:00:00`);
@@ -54,7 +55,7 @@ export function CalendarPage() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold">{t("calendar.title")}</h1>
-        <Link to="/" className="text-sm text-purple-400 hover:underline">{t("common.back_discover")}</Link>
+        <Link to="/" className={btnSecondary}>{t("common.back_discover")}</Link>
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto flex flex-col gap-6">

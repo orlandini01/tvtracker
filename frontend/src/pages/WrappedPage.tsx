@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getWrapped } from "../lib/wrapped";
+import { btnSecondary } from "../lib/buttonStyles";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -22,7 +23,7 @@ export function WrappedPage() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold">{t("wrapped.title")}</h1>
-        <Link to="/" className="text-sm text-purple-400 hover:underline">{t("common.back_discover")}</Link>
+        <Link to="/" className={btnSecondary}>{t("common.back_discover")}</Link>
       </header>
 
       <main className="px-6 py-8 max-w-3xl mx-auto">

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { createList, getLists } from "../lib/lists";
+import { btnPrimary, btnSecondary } from "../lib/buttonStyles";
 
 export function ListsPage() {
   const { t } = useTranslation();
@@ -41,7 +42,7 @@ export function ListsPage() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold">{t("lists.title")}</h1>
-        <Link to="/" className="text-sm text-purple-400 hover:underline">{t("common.back_discover")}</Link>
+        <Link to="/" className={btnSecondary}>{t("common.back_discover")}</Link>
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto flex flex-col gap-6">
@@ -57,7 +58,7 @@ export function ListsPage() {
           <button
             type="submit"
             disabled={createMutation.isPending || !nameInput.trim()}
-            className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium"
+            className={btnPrimary}
           >
             {t("lists.create_button")}
           </button>

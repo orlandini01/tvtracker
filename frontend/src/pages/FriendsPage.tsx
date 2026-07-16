@@ -13,6 +13,7 @@ import {
   sendFriendRequest,
   type RelationshipStatus,
 } from "../lib/friends";
+import { btnDangerSmall, btnPrimary, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
 
 const RELATIONSHIP_LABEL_KEYS: Record<RelationshipStatus, string> = {
   none: "",
@@ -94,7 +95,7 @@ export function FriendsPage() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold">{t("friends.title")}</h1>
-        <Link to="/" className="text-sm text-purple-400 hover:underline">{t("common.back_discover")}</Link>
+        <Link to="/" className={btnSecondary}>{t("common.back_discover")}</Link>
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto flex flex-col gap-8">
@@ -108,7 +109,7 @@ export function FriendsPage() {
               placeholder={t("friends.search_placeholder")}
               className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
             />
-            <button type="submit" className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium">
+            <button type="submit" className={btnPrimary}>
               {t("friends.search_button")}
             </button>
           </form>
@@ -132,7 +133,7 @@ export function FriendsPage() {
                   <button
                     onClick={() => sendMutation.mutate(u.username)}
                     disabled={sendMutation.isPending}
-                    className="rounded-md bg-purple-600 hover:bg-purple-500 px-3 py-1 text-xs font-medium"
+                    className={btnPrimarySmall}
                   >
                     {t("friends.add_button")}
                   </button>
@@ -155,14 +156,14 @@ export function FriendsPage() {
                   <button
                     onClick={() => acceptMutation.mutate(req.id)}
                     disabled={acceptMutation.isPending}
-                    className="rounded-md bg-purple-600 hover:bg-purple-500 px-3 py-1 text-xs font-medium"
+                    className={btnPrimarySmall}
                   >
                     {t("friends.accept")}
                   </button>
                   <button
                     onClick={() => declineMutation.mutate(req.id)}
                     disabled={declineMutation.isPending}
-                    className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1 text-xs"
+                    className={btnDangerSmall}
                   >
                     {t("friends.decline")}
                   </button>
@@ -182,7 +183,7 @@ export function FriendsPage() {
                 <button
                   onClick={() => declineMutation.mutate(req.id)}
                   disabled={declineMutation.isPending}
-                  className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1 text-xs"
+                  className={btnDangerSmall}
                 >
                   {t("friends.cancel")}
                 </button>
@@ -201,14 +202,14 @@ export function FriendsPage() {
                 <div className="flex gap-2">
                   <Link
                     to={`/amigos/${f.id}/comparar`}
-                    className="rounded-md border border-neutral-700 hover:border-purple-500 hover:text-purple-400 px-3 py-1 text-xs"
+                    className={btnSecondarySmall}
                   >
                     {t("friends.compare_link")}
                   </Link>
                   <button
                     onClick={() => removeMutation.mutate(f.id)}
                     disabled={removeMutation.isPending}
-                    className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1 text-xs"
+                    className={btnDangerSmall}
                   >
                     {t("friends.remove_button")}
                   </button>

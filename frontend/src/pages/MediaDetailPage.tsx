@@ -22,6 +22,7 @@ import {
   unmarkEpisodeWatched,
 } from "../lib/episodes";
 import { addListItem, getListMembership, getLists, removeListItem, type CustomListSummary } from "../lib/lists";
+import { btnAccentSmall, btnDanger, btnDangerSmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
 
 const STATUS_OPTIONS: WatchStatus[] = ["quero_assistir", "assistindo", "assistido", "abandonei"];
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -235,10 +236,7 @@ export function MediaDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-neutral-950 text-neutral-100">
         <p className="text-red-400">{t("mediaDetail.not_found")}</p>
-        <Link
-          to="/"
-          className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm font-medium"
-        >
+        <Link to="/" className={btnSecondary}>
           {t("mediaDetail.back")}
         </Link>
       </div>
@@ -281,10 +279,7 @@ export function MediaDetailPage() {
           )}
         </div>
         <div className="flex-1 pt-2 sm:pt-24">
-          <Link
-            to="/"
-            className="inline-block rounded-md border border-neutral-700 bg-neutral-900/80 hover:border-purple-500 hover:bg-neutral-800 px-3 py-1.5 text-sm font-medium transition-colors"
-          >
+          <Link to="/" className={`${btnSecondary} inline-block bg-neutral-900/80`}>
             {t("mediaDetail.back")}
           </Link>
 
@@ -359,7 +354,7 @@ export function MediaDetailPage() {
             <button
               onClick={() => deleteMutation.mutate()}
               disabled={deleteMutation.isPending}
-              className="mt-4 rounded-md border border-red-900 text-red-400 hover:bg-red-950/50 hover:border-red-700 px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+              className={`mt-4 ${btnDanger}`}
             >
               {t("mediaDetail.remove_from_list")}
             </button>
@@ -368,10 +363,7 @@ export function MediaDetailPage() {
           <div className="mt-6">
             <div className="flex items-center justify-between gap-2 mb-2">
               <h2 className="text-sm font-medium text-neutral-400">{t("mediaDetail.custom_lists_heading")}</h2>
-              <Link
-                to="/listas"
-                className="rounded-md border border-neutral-700 hover:border-purple-500 px-2.5 py-1 text-xs font-medium transition-colors"
-              >
+              <Link to="/listas" className={btnSecondarySmall}>
                 {t("mediaDetail.manage_lists_link")}
               </Link>
             </div>
@@ -428,7 +420,7 @@ export function MediaDetailPage() {
                   <button
                     onClick={() => markSeasonMutation.mutate()}
                     disabled={markSeasonMutation.isPending}
-                    className="mb-3 rounded-md border border-purple-800 text-purple-300 hover:bg-purple-950/50 hover:border-purple-600 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+                    className={`mb-3 ${btnAccentSmall}`}
                   >
                     {t("mediaDetail.mark_season_watched")}
                   </button>
@@ -534,7 +526,7 @@ export function MediaDetailPage() {
                       <button
                         onClick={() => deleteCommentMutation.mutate(comment.id)}
                         disabled={deleteCommentMutation.isPending}
-                        className="text-xs text-red-400 hover:underline"
+                        className={btnDangerSmall}
                       >
                         {t("mediaDetail.comment_remove")}
                       </button>

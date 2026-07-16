@@ -8,6 +8,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../lib/notifications";
+import { btnSecondarySmall } from "../lib/buttonStyles";
 
 // Poll leve só pro contador do sino — mantém o badge atualizado mesmo se o
 // usuário ficar navegando sem abrir o dropdown.
@@ -88,7 +89,7 @@ export function NotificationBell() {
               <button
                 onClick={() => markAllReadMutation.mutate()}
                 disabled={markAllReadMutation.isPending}
-                className="text-xs text-purple-400 hover:underline"
+                className={btnSecondarySmall}
               >
                 {t("notifications.mark_all_read")}
               </button>

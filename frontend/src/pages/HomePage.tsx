@@ -15,6 +15,7 @@ import {
   type MediaType,
 } from "../lib/media";
 import { getRecommendations } from "../lib/recommendations";
+import { btnDangerSmall, btnPrimary, btnSecondary } from "../lib/buttonStyles";
 
 const LANGUAGES = [
   { code: "pt", label: "PT" },
@@ -174,11 +175,11 @@ export function HomePage() {
             placeholder={t("home.search_placeholder")}
             className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
           />
-          <button type="submit" className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium">
+          <button type="submit" className={btnPrimary}>
             {t("home.search_button")}
           </button>
           {isSearching && (
-            <button type="button" onClick={clearSearch} className="rounded-md border border-neutral-700 px-3 py-2 text-sm hover:border-neutral-500">
+            <button type="button" onClick={clearSearch} className={btnSecondary}>
               {t("home.clear_button")}
             </button>
           )}
@@ -199,26 +200,29 @@ export function HomePage() {
             ))}
           </div>
           <NotificationBell />
-          <Link to="/calendario" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+          <Link to="/calendario" className={btnSecondary}>
             {t("nav.calendar")}
           </Link>
-          <Link to="/wrapped" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+          <Link to="/wrapped" className={btnSecondary}>
             {t("nav.wrapped")}
           </Link>
-          <Link to="/feed" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+          <Link to="/feed" className={btnSecondary}>
             {t("nav.feed")}
           </Link>
-          <Link to="/amigos" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+          <Link to="/amigos" className={btnSecondary}>
             {t("nav.friends")}
           </Link>
-          <Link to="/minha-lista" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+          <Link to="/minha-lista" className={btnSecondary}>
             {t("nav.my_list")}
           </Link>
-          <Link to="/listas" className="rounded-md border border-neutral-700 hover:border-purple-500 px-3 py-1.5 text-sm">
+          <Link to="/listas" className={btnSecondary}>
             {t("nav.custom_lists")}
           </Link>
           {user && <span className="text-sm text-neutral-400 hidden sm:inline">{user.username}</span>}
-          <button onClick={() => logout()} className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm">
+          <button
+            onClick={() => logout()}
+            className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm font-medium transition-colors"
+          >
             {t("nav.logout")}
           </button>
         </div>
@@ -269,7 +273,7 @@ export function HomePage() {
                 {t("home.streaming_toggle")}{hasProviderFilter ? ` (${selectedProviders.length})` : ""}
               </button>
               {hasProviderFilter && (
-                <button onClick={clearProviderFilter} className="text-xs text-neutral-500 hover:text-red-400 hover:underline">
+                <button onClick={clearProviderFilter} className={btnDangerSmall}>
                   {t("home.streaming_clear")}
                 </button>
               )}

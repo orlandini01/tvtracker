@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { getFeed, type Activity } from "../lib/feed";
 import { STATUS_LABEL_KEYS, type WatchStatus } from "../lib/library";
+import { btnSecondary } from "../lib/buttonStyles";
 
 function describeActivity(t: TFunction, activity: Activity): string {
   const who = activity.user.username;
@@ -59,7 +60,7 @@ export function FeedPage() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold">{t("feed.title")}</h1>
-        <Link to="/" className="text-sm text-purple-400 hover:underline">{t("common.back_discover")}</Link>
+        <Link to="/" className={btnSecondary}>{t("common.back_discover")}</Link>
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto">

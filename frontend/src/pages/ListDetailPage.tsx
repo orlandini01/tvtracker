@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { deleteList, getListDetail, removeListItem, renameList } from "../lib/lists";
+import { btnDangerSmall, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
 
 export function ListDetailPage() {
   const { t } = useTranslation();
@@ -72,7 +73,7 @@ export function ListDetailPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-neutral-950 text-neutral-100">
         <p className="text-red-400">{t("lists.not_found")}</p>
-        <Link to="/listas" className="text-purple-400 hover:underline">{t("lists.back")}</Link>
+        <Link to="/listas" className={btnSecondary}>{t("lists.back")}</Link>
       </div>
     );
   }
@@ -95,14 +96,14 @@ export function ListDetailPage() {
             <button
               type="submit"
               disabled={renameMutation.isPending || !nameInput.trim()}
-              className="rounded-md bg-purple-600 hover:bg-purple-500 px-3 py-1.5 text-sm font-medium"
+              className={btnPrimarySmall}
             >
               {t("lists.save_name")}
             </button>
             <button
               type="button"
               onClick={() => setRenaming(false)}
-              className="rounded-md border border-neutral-700 hover:border-neutral-500 px-3 py-1.5 text-sm"
+              className={btnSecondarySmall}
             >
               {t("common.cancel")}
             </button>
@@ -110,16 +111,16 @@ export function ListDetailPage() {
         ) : (
           <h1 className="text-2xl font-semibold">{list.name}</h1>
         )}
-        <Link to="/listas" className="text-sm text-purple-400 hover:underline shrink-0">{t("lists.back")}</Link>
+        <Link to="/listas" className={`${btnSecondary} shrink-0`}>{t("lists.back")}</Link>
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto">
         {!renaming && (
-          <div className="flex gap-4 mb-6">
-            <button onClick={startRenaming} className="text-xs text-purple-400 hover:underline">
+          <div className="flex gap-2 mb-6">
+            <button onClick={startRenaming} className={btnSecondarySmall}>
               {t("lists.rename_button")}
             </button>
-            <button onClick={handleDelete} disabled={deleteMutation.isPending} className="text-xs text-red-400 hover:underline">
+            <button onClick={handleDelete} disabled={deleteMutation.isPending} className={btnDangerSmall}>
               {t("lists.delete_button")}
             </button>
           </div>
@@ -139,7 +140,7 @@ export function ListDetailPage() {
               <button
                 onClick={() => removeItemMutation.mutate({ mediaType: item.media_type, tmdbId: item.tmdb_id })}
                 disabled={removeItemMutation.isPending}
-                className="text-xs text-red-400 hover:underline shrink-0"
+                className={`${btnDangerSmall} shrink-0`}
               >
                 {t("lists.remove_item")}
               </button>

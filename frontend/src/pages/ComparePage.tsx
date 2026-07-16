@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getCompatibility } from "../lib/compare";
 import { STATUS_LABEL_KEYS, type WatchStatus } from "../lib/library";
+import { btnSecondary } from "../lib/buttonStyles";
 
 function SignalBadges({ is_favorite, status, rating }: { is_favorite: boolean; status: WatchStatus | null; rating: number | null }) {
   const { t } = useTranslation();
@@ -30,7 +31,7 @@ export function ComparePage() {
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold">{t("compare.title")}</h1>
-        <Link to="/amigos" className="text-sm text-purple-400 hover:underline">{t("common.back_friends")}</Link>
+        <Link to="/amigos" className={btnSecondary}>{t("common.back_friends")}</Link>
       </header>
 
       <main className="px-6 py-6 max-w-3xl mx-auto">
