@@ -9,6 +9,7 @@ import { ListsPage } from "./pages/ListsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { MediaDetailPage } from "./pages/MediaDetailPage";
 import { MyListPage } from "./pages/MyListPage";
+import { PublicWrappedPage } from "./pages/PublicWrappedPage";
 import { SignupPage } from "./pages/SignupPage";
 import { WrappedPage } from "./pages/WrappedPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -18,6 +19,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/w/:token" element={<PublicWrappedPage />} />
       <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
       <Route path="/minha-lista" element={<ProtectedRoute><MyListPage /></ProtectedRoute>} />
       <Route path="/listas" element={<ProtectedRoute><ListsPage /></ProtectedRoute>} />

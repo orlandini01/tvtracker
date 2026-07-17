@@ -27,3 +27,10 @@ class WrappedResponse(BaseModel):
     top_movie: WrappedMedia | None
     previous_year_hours: float
     hours_change_pct: float | None
+
+
+class PublicWrappedResponse(WrappedResponse):
+    """Mesma coisa que WrappedResponse, mas exposta via link público sem
+    login — inclui o username pra a página saber de quem é o Wrapped."""
+
+    username: str

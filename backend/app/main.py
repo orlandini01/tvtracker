@@ -13,6 +13,8 @@ from app.api.library import router as library_router
 from app.api.lists import router as lists_router
 from app.api.media import router as media_router
 from app.api.notifications import router as notifications_router
+from app.api.profile import router as profile_router
+from app.api.public import router as public_router
 from app.api.recommendations import router as recommendations_router
 from app.api.routes import router as health_router
 from app.api.wrapped import router as wrapped_router
@@ -44,3 +46,5 @@ app.include_router(wrapped_router)
 app.include_router(recommendations_router)
 app.include_router(lists_router)
 app.include_router(calendar_router)
+app.include_router(profile_router)
+app.include_router(public_router)

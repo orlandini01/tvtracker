@@ -1,11 +1,85 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getWrapped } from "../lib/wrapped";
-import { btnSecondary } from "../lib/buttonStyles";
+import { activateShare, deactivateShare, getShareStatus, rotateShare } from "../lib/profile";
+import { btnDangerSmall, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
 
 const CURRENT_YEAR = new Date().getFullYear();
+
+function ShareWrappedPanel() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [copied, setCopied] = useState(false);
+
+  const shareQuery = useQuery({
+    queryKey: ["share-status"],
+    queryFn: getShareStatus,
+  });
+
+  function onShareChange(status: { enabled: boolean; share_token: string | null }) {
+    queryClient.setQueryData(["share-status"], status);
+  }
+
+  const activateMutation = useMutation({ mutationFn: activateShare, onSuccess: onShareChange });
+  const rotateMutation = useMutation({ mutationFn: rotateShare, onSuccess: onShareChange });
+  const deactivateMutation = useMutation({ mutationFn: deactivateShare, onSuccess: onShareChange });
+
+  const shareToken = shareQuery.data?.share_token ?? null;
+  const shareUrl = shareToken ? `${window.location.origin}/w/${shareToken}` : null;
+  const pending = activateMutation.isPending || rotateMutation.isPending || deactivateMutation.isPending;
+
+  function copyLink() {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  if (shareQuery.isLoading) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-xl border border-neutral-800 p-4 mb-8">
+      <h2 className="text-sm font-medium text-neutral-300 mb-1">{t("wrapped.share_heading")}</h2>
+      <p className="text-xs text-neutral-500 mb-3">{t("wrapped.share_description")}</p>
+
+      {!shareToken && (
+        <button onClick={() => activateMutation.mutate()} disabled={pending} className={btnPrimarySmall}>
+          {t("wrapped.share_activate")}
+        </button>
+      )}
+
+      {shareToken && shareUrl && (
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              readOnly
+              value={shareUrl}
+              onFocus={(e) => e.target.select()}
+              className="flex-1 min-w-[200px] rounded-md bg-neutral-900 border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300"
+            />
+            <button onClick={copyLink} className={btnSecondarySmall}>
+              {copied ? t("wrapped.share_copied") : t("wrapped.share_copy")}
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => rotateMutation.mutate()} disabled={pending} className={btnSecondarySmall}>
+              {t("wrapped.share_rotate")}
+            </button>
+            <button onClick={() => deactivateMutation.mutate()} disabled={pending} className={btnDangerSmall}>
+              {t("wrapped.share_deactivate")}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function WrappedPage() {
   const { t } = useTranslation();
@@ -27,6 +101,8 @@ export function WrappedPage() {
       </header>
 
       <main className="px-6 py-8 max-w-3xl mx-auto">
+        <ShareWrappedPanel />
+
         <div className="flex items-center justify-center gap-4 mb-8">
           <button
             onClick={() => setYear((y) => y - 1)}
