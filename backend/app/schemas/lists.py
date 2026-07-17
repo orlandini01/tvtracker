@@ -18,6 +18,7 @@ class CustomListItemOut(BaseModel):
     title: str
     poster_url: str | None
     added_at: datetime
+    rating: int | None = None
 
 
 class CustomListOut(BaseModel):

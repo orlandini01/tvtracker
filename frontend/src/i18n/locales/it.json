@@ -135,6 +135,11 @@
   "myList.loading": "Caricamento...",
   "myList.error": "Impossibile caricare la tua lista.",
   "myList.empty": "Ancora niente qui — aggiungi ai preferiti o imposta uno stato su un titolo.",
+  "myList.sort_heading": "Ordina per",
+  "myList.sort_updated": "Aggiornati di recente",
+  "myList.sort_rating": "Voto",
+  "myList.sort_title": "Ordine alfabetico",
+  "myList.sort_watched": "Visti di recente",
 
   "friends.title": "Amici",
   "friends.search_heading": "Cerca per username",
@@ -243,6 +248,11 @@
   "lists.delete_confirm": "Sei sicuro di voler eliminare questa lista? Questa azione non può essere annullata.",
   "lists.detail_empty": "Ancora nessun titolo in questa lista.",
   "lists.remove_item": "Rimuovi",
+  "lists.sort_heading": "Ordina per",
+  "lists.sort_added_desc": "Aggiunti di recente",
+  "lists.sort_added_asc": "Aggiunti per primi",
+  "lists.sort_rating": "Voto",
+  "lists.sort_title": "Ordine alfabetico",
 
   "calendar.title": "Calendario",
   "calendar.subtitle": "Prossimi episodi e uscite dei titoli che segui.",

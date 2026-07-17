@@ -135,6 +135,11 @@
   "myList.loading": "Carregando...",
   "myList.error": "Não foi possível carregar sua lista.",
   "myList.empty": "Nada por aqui ainda — favorite ou marque um status em algum título.",
+  "myList.sort_heading": "Ordenar por",
+  "myList.sort_updated": "Atualizado recentemente",
+  "myList.sort_rating": "Nota",
+  "myList.sort_title": "Ordem alfabética",
+  "myList.sort_watched": "Assistido recentemente",
 
   "friends.title": "Amigos",
   "friends.search_heading": "Buscar por username",
@@ -243,6 +248,11 @@
   "lists.delete_confirm": "Tem certeza que quer apagar essa lista? Essa ação não pode ser desfeita.",
   "lists.detail_empty": "Nenhum título nessa lista ainda.",
   "lists.remove_item": "Remover",
+  "lists.sort_heading": "Ordenar por",
+  "lists.sort_added_desc": "Adicionado recentemente",
+  "lists.sort_added_asc": "Adicionado primeiro",
+  "lists.sort_rating": "Nota",
+  "lists.sort_title": "Ordem alfabética",
 
   "calendar.title": "Calendário",
   "calendar.subtitle": "Próximos episódios e estreias dos títulos que você acompanha.",

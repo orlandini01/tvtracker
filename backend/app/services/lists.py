@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.models.custom_list import CustomList
 from app.models.custom_list_item import CustomListItem
 from app.models.media import Media
+from app.models.user_media_status import UserMediaStatus
 from app.services.library import get_or_create_media
 from app.services.tmdb import MediaType
 
@@ -114,9 +115,17 @@ def list_lists(db: Session, user_id) -> list[dict]:
 
 def get_list_detail(db: Session, user_id, list_id) -> dict:
     custom_list = _get_owned_list(db, user_id, list_id)
+    # outerjoin com UserMediaStatus (do MESMO usuário, dono da lista) só pra
+    # trazer a nota já dada ao título, se houver — permite ordenar a lista
+    # por nota no frontend sem outro request. Sempre outerjoin (não join):
+    # um título pode estar numa lista customizada sem nunca ter sido avaliado.
     rows = (
-        db.query(CustomListItem, Media)
+        db.query(CustomListItem, Media, UserMediaStatus.rating)
         .join(Media, CustomListItem.media_id == Media.id)
+        .outerjoin(
+            UserMediaStatus,
+            (UserMediaStatus.media_id == Media.id) & (UserMediaStatus.user_id == user_id),
+        )
         .filter(CustomListItem.list_id == custom_list.id)
         .order_by(CustomListItem.added_at.desc())
         .all()
@@ -128,8 +137,9 @@ def get_list_detail(db: Session, user_id, list_id) -> dict:
             "title": media.title,
             "poster_url": media.poster_url,
             "added_at": item.added_at,
+            "rating": rating,
         }
-        for item, media in rows
+        for item, media, rating in rows
     ]
     return {"id": str(custom_list.id), "name": custom_list.name, "created_at": custom_list.created_at, "items": items}
 

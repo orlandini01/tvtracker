@@ -14,6 +14,7 @@ export type CustomListItem = {
   title: string;
   poster_url: string | null;
   added_at: string;
+  rating: number | null;
 };
 
 export type CustomListDetail = {
