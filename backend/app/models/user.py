@@ -24,6 +24,10 @@ class User(Base):
     # gerado ou desativado pelo usuário. Nunca guardamos o user_id em algo
     # decodificável no link — só esse token, resolvido via lookup no banco.
     share_token: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
+    # Bio curta pro perfil (estilo "status" de rede social) — opcional, sem
+    # nenhum dado sensível, então não precisa de validação além do tamanho
+    # máximo (já garantido no schema Pydantic).
+    bio: Mapped[str | None] = mapped_column(String(280), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     def __repr__(self) -> str:

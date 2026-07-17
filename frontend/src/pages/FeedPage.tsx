@@ -44,11 +44,15 @@ function ActivityCard({ activity, t }: { activity: Activity; t: TFunction }) {
   return (
     <li className="rounded-xl border border-neutral-800 hover:border-neutral-700 bg-neutral-900/30 transition-colors p-4">
       <div className="flex items-start gap-3">
-        <Avatar username={activity.user.username} />
+        <Link to={`/perfil/${activity.user.id}`}>
+          <Avatar username={activity.user.username} />
+        </Link>
 
         <div className="flex-1 min-w-0">
           <p className="text-sm leading-snug">
-            <span className="font-semibold text-neutral-100">{activity.user.username}</span>{" "}
+            <Link to={`/perfil/${activity.user.id}`} className="font-semibold text-neutral-100 hover:text-purple-400">
+              {activity.user.username}
+            </Link>{" "}
             <span className="text-neutral-400">{verbFor(t, activity)}</span>
             <span className="ml-1.5">{ACTION_ICON[activity.action]}</span>
           </p>

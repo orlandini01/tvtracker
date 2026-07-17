@@ -21,6 +21,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUsername: (username: string) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,8 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
+  // Chamado depois de trocar o username em /perfil — evita que o header
+  // (que usa o username em cache do contexto) mostre o valor antigo até
+  // o próximo refresh de página.
+  function updateUsername(username: string) {
+    setUser((prev) => (prev ? { ...prev, username } : prev));
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateUsername }}>
       {children}
     </AuthContext.Provider>
   );

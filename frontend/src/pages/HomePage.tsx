@@ -298,7 +298,11 @@ export function HomePage() {
           <Link to="/listas" className={btnSecondary}>
             {t("nav.custom_lists")}
           </Link>
-          {user && <span className="text-sm text-neutral-400 hidden sm:inline">{user.username}</span>}
+          {user && (
+            <Link to="/perfil" className="text-sm text-neutral-400 hover:text-purple-400 hidden sm:inline">
+              {user.username}
+            </Link>
+          )}
           <button
             onClick={() => logout()}
             className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm font-medium transition-colors"

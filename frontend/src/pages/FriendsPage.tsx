@@ -209,7 +209,7 @@ export function FriendsPage() {
           <ul className="flex flex-col gap-2 fade-in">
             {friends.map((f) => (
               <li key={f.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
-                <span className="text-sm">{f.username}</span>
+                <Link to={`/perfil/${f.id}`} className="text-sm hover:text-purple-400">{f.username}</Link>
                 <div className="flex gap-2">
                   <Link
                     to={`/amigos/${f.id}/comparar`}

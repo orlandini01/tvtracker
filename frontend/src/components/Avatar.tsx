@@ -21,8 +21,14 @@ function colorForUsername(username: string): string {
   return COLORS[Math.abs(hash) % COLORS.length];
 }
 
-export function Avatar({ username, size = "md" }: { username: string; size?: "sm" | "md" }) {
-  const sizeClass = size === "sm" ? "w-7 h-7 text-xs" : "w-10 h-10 text-sm";
+const SIZE_CLASSES = {
+  sm: "w-7 h-7 text-xs",
+  md: "w-10 h-10 text-sm",
+  lg: "w-20 h-20 text-2xl",
+};
+
+export function Avatar({ username, size = "md" }: { username: string; size?: "sm" | "md" | "lg" }) {
+  const sizeClass = SIZE_CLASSES[size];
   return (
     <div
       className={`${sizeClass} ${colorForUsername(username)} rounded-full flex items-center justify-center font-semibold text-white shrink-0`}

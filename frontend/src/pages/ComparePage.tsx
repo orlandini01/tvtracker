@@ -78,7 +78,9 @@ export function ComparePage() {
                           <SignalBadges is_favorite={c.you.is_favorite} status={c.you.status} rating={c.you.rating} />
                         </div>
                         <div>
-                          <p className="text-xs text-neutral-500">{query.data!.friend.username}</p>
+                          <Link to={`/perfil/${query.data!.friend.id}`} className="text-xs text-neutral-500 hover:text-purple-400">
+                            {query.data!.friend.username}
+                          </Link>
                           <SignalBadges is_favorite={c.friend.is_favorite} status={c.friend.status} rating={c.friend.rating} />
                         </div>
                       </div>
