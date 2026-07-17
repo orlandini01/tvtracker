@@ -26,6 +26,7 @@
   "nav.custom_lists": "Liste",
   "nav.calendar": "Calendario",
   "nav.wrapped": "Wrapped",
+  "nav.achievements": "Obiettivi",
   "nav.logout": "Esci",
 
   "auth.login.heading": "Accedi",
@@ -260,5 +261,28 @@
   "calendar.error": "Impossibile caricare il calendario.",
   "calendar.empty": "Ancora niente qui. Aggiungi ai preferiti o segna un titolo come \"da vedere\"/\"in visione\" per vedere qui le prossime novità.",
   "calendar.episode_label": "Stagione {{season}}, episodio {{episode}}",
-  "calendar.movie_release_label": "Uscita al cinema"
+  "calendar.movie_release_label": "Uscita al cinema",
+
+  "achievements.title": "Obiettivi",
+  "achievements.loading": "Caricamento...",
+  "achievements.error": "Impossibile caricare i tuoi obiettivi.",
+  "achievements.summary": "{{earned}} di {{total}} ottenuti",
+  "achievements.primeiro_passo.name": "Primo passo",
+  "achievements.primeiro_passo.description": "Guarda il tuo primo film o episodio.",
+  "achievements.maratonista.name": "Maratoneta",
+  "achievements.maratonista.description": "Guarda 10 episodi della stessa serie nello stesso giorno.",
+  "achievements.cinefilo.name": "Cinefilo",
+  "achievements.cinefilo.description": "Guarda 25 film.",
+  "achievements.serie_viciado.name": "Dipendente da serie TV",
+  "achievements.serie_viciado.description": "Guarda 100 episodi in totale.",
+  "achievements.critico.name": "Critico",
+  "achievements.critico.description": "Vota 20 titoli o episodi.",
+  "achievements.curador.name": "Curatore",
+  "achievements.curador.description": "Crea 3 liste personalizzate.",
+  "achievements.social.name": "Socievole",
+  "achievements.social.description": "Aggiungi 5 amici.",
+  "achievements.comentarista.name": "Commentatore",
+  "achievements.comentarista.description": "Scrivi 10 commenti.",
+  "achievements.favoritos.name": "Superfan",
+  "achievements.favoritos.description": "Aggiungi 15 titoli ai preferiti."
 }

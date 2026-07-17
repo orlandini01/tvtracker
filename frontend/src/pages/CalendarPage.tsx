@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { getCalendar, type CalendarItem } from "../lib/calendar";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonRows } from "../components/Skeleton";
 import { btnSecondary } from "../lib/buttonStyles";
 
 function formatDate(isoDate: string): string {
@@ -61,14 +63,14 @@ export function CalendarPage() {
       <main className="px-6 py-6 max-w-2xl mx-auto flex flex-col gap-6">
         <p className="text-sm text-neutral-500">{t("calendar.subtitle")}</p>
 
-        {query.isLoading && <p className="text-sm text-neutral-400">{t("calendar.loading")}</p>}
+        {query.isLoading && <SkeletonRows count={5} />}
         {query.isError && <p className="text-sm text-red-400">{t("calendar.error")}</p>}
         {query.data && query.data.length === 0 && (
-          <p className="text-sm text-neutral-500">{t("calendar.empty")}</p>
+          <EmptyState icon="📅" message={t("calendar.empty")} />
         )}
 
         {query.data && query.data.length > 0 && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 fade-in">
             {query.data.map((item) => (
               <CalendarRow key={`${item.media_type}-${item.tmdb_id}`} item={item} />
             ))}

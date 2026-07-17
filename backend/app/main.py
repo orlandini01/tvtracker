@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+from app.api.achievements import router as achievements_router
 from app.api.auth import limiter, router as auth_router
 from app.api.calendar import router as calendar_router
 from app.api.comments import router as comments_router
@@ -48,3 +49,4 @@ app.include_router(lists_router)
 app.include_router(calendar_router)
 app.include_router(profile_router)
 app.include_router(public_router)
+app.include_router(achievements_router)

@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { listLibrary, STATUS_LABEL_KEYS, type LibraryEntry, type WatchStatus } from "../lib/library";
+import { EmptyState } from "../components/EmptyState";
 import { MediaCard } from "../components/MediaCard";
+import { SkeletonCardGrid } from "../components/Skeleton";
 import { btnSecondary } from "../lib/buttonStyles";
 
 type FilterValue = "all" | "favorites" | WatchStatus;
@@ -112,14 +114,14 @@ export function MyListPage() {
           </label>
         </div>
 
-        {query.isLoading && <p className="text-neutral-400 text-sm">{t("myList.loading")}</p>}
+        {query.isLoading && <SkeletonCardGrid />}
         {query.isError && <p className="text-red-400 text-sm">{t("myList.error")}</p>}
         {sortedData && sortedData.length === 0 && (
-          <p className="text-neutral-400 text-sm">{t("myList.empty")}</p>
+          <EmptyState icon="📼" message={t("myList.empty")} />
         )}
 
         {sortedData && sortedData.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 fade-in">
             {sortedData.map((entry) => (
               <MediaCard
                 key={`${entry.media_type}-${entry.tmdb_id}`}

@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getWrapped } from "../lib/wrapped";
 import { activateShare, deactivateShare, getShareStatus, rotateShare } from "../lib/profile";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonBlock } from "../components/Skeleton";
 import { btnDangerSmall, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -120,17 +122,24 @@ export function WrappedPage() {
           </button>
         </div>
 
-        {query.isLoading && <p className="text-sm text-neutral-400 text-center">{t("wrapped.loading")}</p>}
+        {query.isLoading && (
+          <div className="flex flex-col gap-6">
+            <SkeletonBlock className="h-40 w-full rounded-2xl" />
+            <div className="grid grid-cols-3 gap-4">
+              <SkeletonBlock className="h-24 rounded-xl" />
+              <SkeletonBlock className="h-24 rounded-xl" />
+              <SkeletonBlock className="h-24 rounded-xl" />
+            </div>
+          </div>
+        )}
         {query.isError && <p className="text-sm text-red-400 text-center">{t("wrapped.error")}</p>}
 
         {data && !hasActivity && (
-          <p className="text-sm text-neutral-400 text-center mt-10">
-            {t("wrapped.empty_year", { year })}
-          </p>
+          <EmptyState icon="🎬" message={t("wrapped.empty_year", { year })} className="mt-6" />
         )}
 
         {data && hasActivity && (
-          <>
+          <div className="fade-in">
             <div className="rounded-2xl bg-gradient-to-br from-purple-900/60 to-neutral-900 border border-purple-800/50 py-10 px-6 text-center mb-6">
               <p className="text-sm text-purple-300 mb-2">{t("wrapped.watched_heading")}</p>
               <p className="text-6xl font-extrabold text-white">
@@ -223,7 +232,7 @@ export function WrappedPage() {
                 </Link>
               )}
             </div>
-          </>
+          </div>
         )}
       </main>
     </div>

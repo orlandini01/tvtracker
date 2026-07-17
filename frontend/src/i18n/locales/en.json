@@ -26,6 +26,7 @@
   "nav.custom_lists": "Lists",
   "nav.calendar": "Calendar",
   "nav.wrapped": "Wrapped",
+  "nav.achievements": "Achievements",
   "nav.logout": "Log out",
 
   "auth.login.heading": "Log in",
@@ -260,5 +261,28 @@
   "calendar.error": "Could not load the calendar.",
   "calendar.empty": "Nothing here yet. Favorite or mark a title as \"want to watch\"/\"watching\" to see upcoming releases here.",
   "calendar.episode_label": "Season {{season}}, episode {{episode}}",
-  "calendar.movie_release_label": "Theatrical release"
+  "calendar.movie_release_label": "Theatrical release",
+
+  "achievements.title": "Achievements",
+  "achievements.loading": "Loading...",
+  "achievements.error": "Could not load your achievements.",
+  "achievements.summary": "{{earned}} of {{total}} earned",
+  "achievements.primeiro_passo.name": "First step",
+  "achievements.primeiro_passo.description": "Watch your first movie or episode.",
+  "achievements.maratonista.name": "Binge watcher",
+  "achievements.maratonista.description": "Watch 10 episodes of the same show in one day.",
+  "achievements.cinefilo.name": "Movie buff",
+  "achievements.cinefilo.description": "Watch 25 movies.",
+  "achievements.serie_viciado.name": "Show addict",
+  "achievements.serie_viciado.description": "Watch 100 episodes in total.",
+  "achievements.critico.name": "Critic",
+  "achievements.critico.description": "Rate 20 titles or episodes.",
+  "achievements.curador.name": "Curator",
+  "achievements.curador.description": "Create 3 custom lists.",
+  "achievements.social.name": "Social",
+  "achievements.social.description": "Add 5 friends.",
+  "achievements.comentarista.name": "Commentator",
+  "achievements.comentarista.description": "Write 10 comments.",
+  "achievements.favoritos.name": "Superfan",
+  "achievements.favoritos.description": "Favorite 15 titles."
 }

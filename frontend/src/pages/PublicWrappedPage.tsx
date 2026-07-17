@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getPublicWrapped } from "../lib/wrapped";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonBlock } from "../components/Skeleton";
 import { btnPrimary } from "../lib/buttonStyles";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -30,7 +32,7 @@ export function PublicWrappedPage() {
   if (query.isError) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-neutral-950 text-neutral-100 px-6 text-center">
-        <p className="text-red-400">{t("publicWrapped.not_found")}</p>
+        <EmptyState icon="🔒" message={t("publicWrapped.not_found")} />
         <Link to="/" className={btnPrimary}>
           {t("publicWrapped.go_home")}
         </Link>
@@ -48,10 +50,19 @@ export function PublicWrappedPage() {
       </header>
 
       <main className="px-6 py-8 max-w-3xl mx-auto">
-        {query.isLoading && <p className="text-sm text-neutral-400 text-center">{t("wrapped.loading")}</p>}
+        {query.isLoading && (
+          <div className="flex flex-col gap-6">
+            <SkeletonBlock className="h-40 w-full rounded-2xl" />
+            <div className="grid grid-cols-3 gap-4">
+              <SkeletonBlock className="h-24 rounded-xl" />
+              <SkeletonBlock className="h-24 rounded-xl" />
+              <SkeletonBlock className="h-24 rounded-xl" />
+            </div>
+          </div>
+        )}
 
         {data && (
-          <>
+          <div className="fade-in">
             <p className="text-center text-neutral-400 mb-2">
               {t("publicWrapped.heading", { username: data.username })}
             </p>
@@ -74,7 +85,7 @@ export function PublicWrappedPage() {
             </div>
 
             {!hasActivity && (
-              <p className="text-sm text-neutral-400 text-center mt-10">{t("wrapped.empty_year", { year })}</p>
+              <EmptyState icon="🎬" message={t("wrapped.empty_year", { year })} className="mt-6" />
             )}
 
             {hasActivity && (
@@ -174,7 +185,7 @@ export function PublicWrappedPage() {
                 {t("publicWrapped.cta_button")}
               </Link>
             </div>
-          </>
+          </div>
         )}
       </main>
     </div>

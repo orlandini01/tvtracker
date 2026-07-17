@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { createList, getLists } from "../lib/lists";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonRows } from "../components/Skeleton";
 import { btnPrimary, btnSecondary } from "../lib/buttonStyles";
 
 export function ListsPage() {
@@ -66,13 +68,13 @@ export function ListsPage() {
 
         {feedback && <p className="text-sm text-red-400">{feedback}</p>}
 
-        {listsQuery.isLoading && <p className="text-sm text-neutral-400">{t("lists.loading")}</p>}
+        {listsQuery.isLoading && <SkeletonRows count={3} />}
         {listsQuery.isError && <p className="text-sm text-red-400">{t("lists.error")}</p>}
         {listsQuery.data && lists.length === 0 && (
-          <p className="text-sm text-neutral-500">{t("lists.empty")}</p>
+          <EmptyState icon="📋" message={t("lists.empty")} />
         )}
 
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 fade-in">
           {lists.map((l) => (
             <li key={l.id}>
               <Link

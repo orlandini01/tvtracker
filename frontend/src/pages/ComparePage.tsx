@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getCompatibility } from "../lib/compare";
 import { STATUS_LABEL_KEYS, type WatchStatus } from "../lib/library";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonRows } from "../components/Skeleton";
 import { btnSecondary } from "../lib/buttonStyles";
 
 function SignalBadges({ is_favorite, status, rating }: { is_favorite: boolean; status: WatchStatus | null; rating: number | null }) {
@@ -35,7 +37,7 @@ export function ComparePage() {
       </header>
 
       <main className="px-6 py-6 max-w-3xl mx-auto">
-        {query.isLoading && <p className="text-sm text-neutral-400">{t("compare.loading")}</p>}
+        {query.isLoading && <SkeletonRows count={4} />}
         {query.isError && (
           <p className="text-sm text-red-400">
             {t("compare.error")}
@@ -43,7 +45,7 @@ export function ComparePage() {
         )}
 
         {query.data && (
-          <>
+          <div className="fade-in">
             <div className="flex flex-col items-center gap-2 mb-8 rounded-xl border border-neutral-800 py-8">
               <p className="text-sm text-neutral-400">{t("compare.compatibility_with", { username: query.data.friend.username })}</p>
               <p className="text-5xl font-bold text-purple-400">{query.data.compatibility_score}%</p>
@@ -58,7 +60,7 @@ export function ComparePage() {
             <section className="mb-8">
               <h2 className="text-sm font-medium text-neutral-400 mb-3">{t("compare.common_titles_heading")}</h2>
               {query.data.common_titles.length === 0 && (
-                <p className="text-sm text-neutral-500">{t("compare.no_common_titles")}</p>
+                <EmptyState icon="🎬" message={t("compare.no_common_titles")} className="py-4" />
               )}
               <ul className="flex flex-col gap-3">
                 {query.data.common_titles.map((c) => (
@@ -91,7 +93,7 @@ export function ComparePage() {
                 {t("compare.recommended_by", { username: query.data.friend.username })}
               </h2>
               {query.data.recommendations.length === 0 && (
-                <p className="text-sm text-neutral-500">{t("compare.no_recommendations")}</p>
+                <EmptyState icon="✨" message={t("compare.no_recommendations")} className="py-4" />
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {query.data.recommendations.map((r) => (
@@ -115,7 +117,7 @@ export function ComparePage() {
                 ))}
               </div>
             </section>
-          </>
+          </div>
         )}
       </main>
     </div>

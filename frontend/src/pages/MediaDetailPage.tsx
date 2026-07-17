@@ -23,6 +23,7 @@ import {
 } from "../lib/episodes";
 import { addListItem, getListMembership, getLists, removeListItem, type CustomListSummary } from "../lib/lists";
 import { btnAccentSmall, btnDanger, btnDangerSmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
+import { SkeletonBlock } from "../components/Skeleton";
 
 const STATUS_OPTIONS: WatchStatus[] = ["quero_assistir", "assistindo", "assistido", "abandonei"];
 const RATING_OPTIONS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -229,7 +230,23 @@ export function MediaDetailPage() {
   }
 
   if (detailQuery.isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">{t("mediaDetail.loading")}</div>;
+    return (
+      <div className="min-h-screen bg-neutral-950 text-neutral-100">
+        <div className="px-6 py-4 border-b border-neutral-800">
+          <SkeletonBlock className="h-6 w-24" />
+        </div>
+        <main className="px-6 py-6 max-w-4xl mx-auto flex flex-col sm:flex-row gap-6">
+          <SkeletonBlock className="w-full sm:w-56 aspect-[2/3] shrink-0" />
+          <div className="flex-1 flex flex-col gap-3">
+            <SkeletonBlock className="h-8 w-2/3" />
+            <SkeletonBlock className="h-4 w-1/3" />
+            <SkeletonBlock className="h-4 w-full mt-3" />
+            <SkeletonBlock className="h-4 w-full" />
+            <SkeletonBlock className="h-4 w-3/4" />
+          </div>
+        </main>
+      </div>
+    );
   }
 
   if (detailQuery.isError || !detailQuery.data) {
@@ -270,7 +287,7 @@ export function MediaDetailPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/60 to-transparent" />
         </div>
       )}
-      <div className="max-w-4xl mx-auto px-6 -mt-24 relative flex flex-col sm:flex-row gap-6 pb-10">
+      <div className="max-w-4xl mx-auto px-6 -mt-24 relative flex flex-col sm:flex-row gap-6 pb-10 fade-in">
         <div className="w-40 sm:w-56 shrink-0 rounded-lg overflow-hidden border border-neutral-800 bg-neutral-900 self-start">
           {media.poster_url ? (
             <img src={media.poster_url} alt={media.title} className="w-full h-full object-cover" />

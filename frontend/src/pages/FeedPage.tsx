@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { getFeed, type Activity } from "../lib/feed";
 import { STATUS_LABEL_KEYS, type WatchStatus } from "../lib/library";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonRows } from "../components/Skeleton";
 import { btnSecondary } from "../lib/buttonStyles";
 
 function describeActivity(t: TFunction, activity: Activity): string {
@@ -64,17 +66,13 @@ export function FeedPage() {
       </header>
 
       <main className="px-6 py-6 max-w-2xl mx-auto">
-        {feedQuery.isLoading && <p className="text-neutral-400 text-sm">{t("feed.loading")}</p>}
+        {feedQuery.isLoading && <SkeletonRows count={5} />}
         {feedQuery.isError && <p className="text-red-400 text-sm">{t("feed.error")}</p>}
-        {showEmpty && (
-          <p className="text-neutral-400 text-sm">
-            {t("feed.empty")}
-          </p>
-        )}
+        {showEmpty && <EmptyState icon="👥" message={t("feed.empty")} />}
 
         {activities.length > 0 && (
           <>
-            <ul className="flex flex-col gap-3">
+            <ul className="flex flex-col gap-3 fade-in">
               {activities.map((activity) => (
                 <li key={activity.id} className="flex items-center gap-3 rounded-lg border border-neutral-800 p-3">
                   <Link to={`/media/${activity.media.media_type}/${activity.media.tmdb_id}`} className="shrink-0 w-12 h-18 rounded overflow-hidden bg-neutral-800">

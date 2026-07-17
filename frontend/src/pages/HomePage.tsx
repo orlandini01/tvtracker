@@ -3,8 +3,10 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { EmptyState } from "../components/EmptyState";
 import { MediaCard } from "../components/MediaCard";
 import { NotificationBell } from "../components/NotificationBell";
+import { SkeletonCardGrid } from "../components/Skeleton";
 import {
   DISCOVER_CATEGORIES,
   discoverByProviders,
@@ -278,6 +280,9 @@ export function HomePage() {
           <Link to="/calendario" className={btnSecondary}>
             {t("nav.calendar")}
           </Link>
+          <Link to="/conquistas" className={btnSecondary}>
+            {t("nav.achievements")}
+          </Link>
           <Link to="/wrapped" className={btnSecondary}>
             {t("nav.wrapped")}
           </Link>
@@ -515,7 +520,7 @@ export function HomePage() {
           </p>
         )}
 
-        {showInitialLoading && <p className="text-neutral-400 text-sm">{t("home.loading")}</p>}
+        {showInitialLoading && <SkeletonCardGrid />}
 
         {showInitialError && (
           <p className="text-red-400 text-sm">
@@ -524,12 +529,12 @@ export function HomePage() {
         )}
 
         {!showInitialLoading && !showInitialError && results.length === 0 && (
-          <p className="text-neutral-400 text-sm">{t("home.empty")}</p>
+          <EmptyState icon="🔍" message={t("home.empty")} />
         )}
 
         {results.length > 0 && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 fade-in">
               {results.map((item) => (
                 <MediaCard key={`${item.media_type}-${item.tmdb_id}`} item={item} />
               ))}

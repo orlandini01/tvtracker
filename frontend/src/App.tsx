@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { AchievementsPage } from "./pages/AchievementsPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { ComparePage } from "./pages/ComparePage";
 import { FeedPage } from "./pages/FeedPage";
@@ -29,6 +30,7 @@ function App() {
       <Route path="/feed" element={<ProtectedRoute><FeedPage /></ProtectedRoute>} />
       <Route path="/wrapped" element={<ProtectedRoute><WrappedPage /></ProtectedRoute>} />
       <Route path="/calendario" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+      <Route path="/conquistas" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
       <Route path="/media/:mediaType/:tmdbId" element={<ProtectedRoute><MediaDetailPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

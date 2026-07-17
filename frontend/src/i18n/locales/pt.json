@@ -26,6 +26,7 @@
   "nav.custom_lists": "Listas",
   "nav.calendar": "Calendário",
   "nav.wrapped": "Wrapped",
+  "nav.achievements": "Conquistas",
   "nav.logout": "Sair",
 
   "auth.login.heading": "Entrar",
@@ -260,5 +261,28 @@
   "calendar.error": "Não foi possível carregar o calendário.",
   "calendar.empty": "Nada por aqui ainda. Favorite ou marque como \"quero assistir\"/\"assistindo\" pra ver as próximas novidades aqui.",
   "calendar.episode_label": "Temporada {{season}}, episódio {{episode}}",
-  "calendar.movie_release_label": "Estreia nos cinemas"
+  "calendar.movie_release_label": "Estreia nos cinemas",
+
+  "achievements.title": "Conquistas",
+  "achievements.loading": "Carregando...",
+  "achievements.error": "Não foi possível carregar suas conquistas.",
+  "achievements.summary": "{{earned}} de {{total}} conquistadas",
+  "achievements.primeiro_passo.name": "Primeiro passo",
+  "achievements.primeiro_passo.description": "Assista seu primeiro filme ou episódio.",
+  "achievements.maratonista.name": "Maratonista",
+  "achievements.maratonista.description": "Assista 10 episódios de uma mesma série no mesmo dia.",
+  "achievements.cinefilo.name": "Cinéfilo",
+  "achievements.cinefilo.description": "Assista 25 filmes.",
+  "achievements.serie_viciado.name": "Viciado em séries",
+  "achievements.serie_viciado.description": "Assista 100 episódios no total.",
+  "achievements.critico.name": "Crítico",
+  "achievements.critico.description": "Dê nota a 20 títulos ou episódios.",
+  "achievements.curador.name": "Curador",
+  "achievements.curador.description": "Crie 3 listas personalizadas.",
+  "achievements.social.name": "Social",
+  "achievements.social.description": "Adicione 5 amigos.",
+  "achievements.comentarista.name": "Comentarista",
+  "achievements.comentarista.description": "Escreva 10 comentários.",
+  "achievements.favoritos.name": "Fã de carteirinha",
+  "achievements.favoritos.description": "Favorite 15 títulos."
 }

@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { deleteList, getListDetail, removeListItem, renameList, type CustomListItem } from "../lib/lists";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonRows } from "../components/Skeleton";
 import { btnDangerSmall, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
 
 // Client-side pois o detalhe da lista já vem inteiro num único request.
@@ -103,7 +105,17 @@ export function ListDetailPage() {
   }
 
   if (detailQuery.isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-400">{t("lists.loading")}</div>;
+    return (
+      <div className="min-h-screen bg-neutral-950 text-neutral-100">
+        <header className="flex items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
+          <div className="h-7 w-40 rounded-md bg-neutral-800 animate-pulse" />
+          <Link to="/listas" className={btnSecondary}>{t("lists.back")}</Link>
+        </header>
+        <main className="px-6 py-6 max-w-2xl mx-auto">
+          <SkeletonRows count={4} />
+        </main>
+      </div>
+    );
   }
 
   if (detailQuery.isError || !detailQuery.data) {
@@ -182,9 +194,9 @@ export function ListDetailPage() {
           </div>
         )}
 
-        {list.items.length === 0 && <p className="text-sm text-neutral-500">{t("lists.detail_empty")}</p>}
+        {list.items.length === 0 && <EmptyState icon="📼" message={t("lists.detail_empty")} />}
 
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-3 fade-in">
           {sortedItems.map((item) => (
             <li key={`${item.media_type}-${item.tmdb_id}`} className="flex items-center gap-3 rounded-lg border border-neutral-800 p-3">
               <Link to={`/media/${item.media_type}/${item.tmdb_id}`} className="shrink-0 w-12 h-18 rounded overflow-hidden bg-neutral-800">

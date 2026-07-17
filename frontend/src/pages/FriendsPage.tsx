@@ -14,6 +14,8 @@ import {
   type RelationshipStatus,
 } from "../lib/friends";
 import { btnDangerSmall, btnPrimary, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
+import { EmptyState } from "../components/EmptyState";
+import { SkeletonRows } from "../components/Skeleton";
 
 const RELATIONSHIP_LABEL_KEYS: Record<RelationshipStatus, string> = {
   none: "",
@@ -116,16 +118,16 @@ export function FriendsPage() {
 
           {feedback && <p className="text-sm text-red-400 mb-2">{feedback}</p>}
 
-          {searchQuery.isFetching && <p className="text-sm text-neutral-500">{t("friends.searching")}</p>}
+          {searchQuery.isFetching && <SkeletonRows count={2} />}
           {searchQuery.isError && (
             <p className="text-sm text-red-400">
               {t("friends.search_error")}
             </p>
           )}
           {searchQuery.data && searchQuery.data.length === 0 && (
-            <p className="text-sm text-neutral-500">{t("friends.no_users_found")}</p>
+            <EmptyState icon="🔎" message={t("friends.no_users_found")} className="py-4" />
           )}
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2 fade-in">
             {searchQuery.data?.map((u) => (
               <li key={u.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
                 <span className="text-sm">{u.username}</span>
@@ -147,8 +149,11 @@ export function FriendsPage() {
 
         <section>
           <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("friends.incoming_heading")}</h2>
-          {incoming.length === 0 && <p className="text-sm text-neutral-500">{t("friends.no_incoming")}</p>}
-          <ul className="flex flex-col gap-2">
+          {incomingQuery.isLoading && <SkeletonRows count={2} />}
+          {!incomingQuery.isLoading && incoming.length === 0 && (
+            <EmptyState icon="📨" message={t("friends.no_incoming")} className="py-4" />
+          )}
+          <ul className="flex flex-col gap-2 fade-in">
             {incoming.map((req) => (
               <li key={req.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
                 <span className="text-sm">{req.requester.username}</span>
@@ -175,8 +180,11 @@ export function FriendsPage() {
 
         <section>
           <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("friends.outgoing_heading")}</h2>
-          {outgoing.length === 0 && <p className="text-sm text-neutral-500">{t("friends.no_outgoing")}</p>}
-          <ul className="flex flex-col gap-2">
+          {outgoingQuery.isLoading && <SkeletonRows count={2} />}
+          {!outgoingQuery.isLoading && outgoing.length === 0 && (
+            <EmptyState icon="📤" message={t("friends.no_outgoing")} className="py-4" />
+          )}
+          <ul className="flex flex-col gap-2 fade-in">
             {outgoing.map((req) => (
               <li key={req.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
                 <span className="text-sm">{req.addressee.username}</span>
@@ -194,8 +202,11 @@ export function FriendsPage() {
 
         <section>
           <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("friends.my_friends_heading")}</h2>
-          {friends.length === 0 && <p className="text-sm text-neutral-500">{t("friends.no_friends")}</p>}
-          <ul className="flex flex-col gap-2">
+          {friendsQuery.isLoading && <SkeletonRows count={3} />}
+          {!friendsQuery.isLoading && friends.length === 0 && (
+            <EmptyState icon="🧑‍🤝‍🧑" message={t("friends.no_friends")} className="py-4" />
+          )}
+          <ul className="flex flex-col gap-2 fade-in">
             {friends.map((f) => (
               <li key={f.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
                 <span className="text-sm">{f.username}</span>
