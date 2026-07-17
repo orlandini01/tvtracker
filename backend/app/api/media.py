@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.schemas.media import (
+    GenreListResponse,
     MediaDetail,
     MediaListResponse,
     WatchProviderCatalogResponse,
@@ -65,6 +66,47 @@ async def discover_by_provider(
     except ValueError:
         raise HTTPException(status_code=422, detail="Parâmetro 'providers' deve ser uma lista de IDs separados por vírgula")
     return await _call(tmdb.discover_by_providers(db, media_type, provider_ids, region, page))
+
+
+@router.get("/genres", response_model=GenreListResponse)
+async def media_genres(
+    media_type: Literal["movie", "tv"] = Query("movie"),
+    db: Session = Depends(get_db),
+):
+    mapping = await _call(tmdb.get_genre_map(db, media_type))
+    results = [{"id": genre_id, "name": name} for name, genre_id in mapping.items()]
+    results.sort(key=lambda g: g["name"].casefold())
+    return {"results": results}
+
+
+@router.get("/discover-filtered", response_model=MediaListResponse)
+async def discover_filtered(
+    media_type: Literal["movie", "tv"] = Query("movie"),
+    genres: str | None = Query(None, description="IDs de gênero separados por vírgula, ex: 28,12"),
+    year: int | None = Query(None, ge=1870, le=2100),
+    min_rating: float | None = Query(None, ge=0, le=10),
+    providers: str | None = Query(None, description="IDs de provedor separados por vírgula"),
+    region: str = Query("BR", min_length=2, max_length=2),
+    page: int = Query(1, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    genre_ids = None
+    if genres:
+        try:
+            genre_ids = [int(g) for g in genres.split(",") if g.strip()]
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Parâmetro 'genres' deve ser uma lista de IDs separados por vírgula")
+
+    provider_ids = None
+    if providers:
+        try:
+            provider_ids = [int(p) for p in providers.split(",") if p.strip()]
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Parâmetro 'providers' deve ser uma lista de IDs separados por vírgula")
+
+    return await _call(
+        tmdb.discover_filtered(db, media_type, provider_ids, genre_ids, year, min_rating, region, page)
+    )
 
 
 @router.get("/{media_type}/{tmdb_id}", response_model=MediaDetail)

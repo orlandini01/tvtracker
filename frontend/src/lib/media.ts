@@ -112,3 +112,40 @@ export async function discoverByProviders(
   });
   return data;
 }
+
+export type GenreItem = {
+  id: number;
+  name: string;
+};
+
+export async function getGenres(mediaType: MediaType): Promise<GenreItem[]> {
+  const { data } = await api.get<{ results: GenreItem[] }>("/media/genres", {
+    params: { media_type: mediaType },
+  });
+  return data.results;
+}
+
+export type DiscoverFilteredParams = {
+  mediaType: MediaType;
+  genreIds?: number[];
+  year?: number | null;
+  minRating?: number | null;
+  providerIds?: number[];
+  page?: number;
+  region?: string;
+};
+
+export async function discoverFiltered(params: DiscoverFilteredParams): Promise<MediaListResponse> {
+  const { data } = await api.get<MediaListResponse>("/media/discover-filtered", {
+    params: {
+      media_type: params.mediaType,
+      genres: params.genreIds && params.genreIds.length > 0 ? params.genreIds.join(",") : undefined,
+      year: params.year ?? undefined,
+      min_rating: params.minRating ?? undefined,
+      providers: params.providerIds && params.providerIds.length > 0 ? params.providerIds.join(",") : undefined,
+      region: params.region ?? "BR",
+      page: params.page ?? 1,
+    },
+  });
+  return data;
+}

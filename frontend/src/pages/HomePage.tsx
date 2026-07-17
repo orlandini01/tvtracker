@@ -8,9 +8,12 @@ import { NotificationBell } from "../components/NotificationBell";
 import {
   DISCOVER_CATEGORIES,
   discoverByProviders,
+  discoverFiltered,
   discoverMedia,
+  getGenres,
   getProviderCatalog,
   searchMedia,
+  type GenreItem,
   type MediaSummary,
   type MediaType,
 } from "../lib/media";
@@ -62,6 +65,37 @@ export function HomePage() {
     staleTime: 60 * 60 * 1000,
   });
 
+  // Filtros avançados: gênero, ano e nota mínima — painel à parte do
+  // filtro de streaming (mais simples de raciocinar do que combinar os
+  // dois; dá pra unificar depois se fizer falta).
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [filterMediaType, setFilterMediaType] = useState<MediaType>("movie");
+  const [selectedGenreIds, setSelectedGenreIds] = useState<number[]>([]);
+  const [filterYear, setFilterYear] = useState<number | null>(null);
+  const [filterMinRating, setFilterMinRating] = useState<number | null>(null);
+  const hasAdvancedFilter = selectedGenreIds.length > 0 || filterYear !== null || filterMinRating !== null;
+
+  const genresQuery = useQuery({
+    queryKey: ["genres", filterMediaType],
+    queryFn: () => getGenres(filterMediaType),
+    enabled: showAdvancedFilter,
+    staleTime: 60 * 60 * 1000,
+  });
+
+  function toggleGenre(id: number) {
+    setSelectedGenreIds((prev) => (prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]));
+  }
+
+  function clearAdvancedFilter() {
+    setSelectedGenreIds([]);
+    setFilterYear(null);
+    setFilterMinRating(null);
+  }
+
+  const currentYear = new Date().getFullYear();
+  const FILTER_YEARS = Array.from({ length: currentYear - 1950 + 1 }, (_, i) => currentYear - i);
+  const FILTER_MIN_RATINGS = [9, 8, 7, 6, 5];
+
   const recommendationsQuery = useQuery({
     queryKey: ["recommendations"],
     queryFn: getRecommendations,
@@ -106,7 +140,36 @@ export function HomePage() {
     refetchOnWindowFocus: false,
   });
 
-  const active = isSearching ? searchQuery : hasProviderFilter ? providerDiscoverQuery : discoverQuery;
+  const advancedDiscoverQuery = useInfiniteQuery({
+    queryKey: [
+      "discover-filtered",
+      filterMediaType,
+      selectedGenreIds.slice().sort().join(","),
+      filterYear,
+      filterMinRating,
+    ],
+    queryFn: ({ pageParam }) =>
+      discoverFiltered({
+        mediaType: filterMediaType,
+        genreIds: selectedGenreIds,
+        year: filterYear,
+        minRating: filterMinRating,
+        page: pageParam,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined),
+    enabled: !isSearching && hasAdvancedFilter,
+    staleTime: LIST_STALE_TIME,
+    refetchOnWindowFocus: false,
+  });
+
+  const active = isSearching
+    ? searchQuery
+    : hasAdvancedFilter
+      ? advancedDiscoverQuery
+      : hasProviderFilter
+        ? providerDiscoverQuery
+        : discoverQuery;
 
   // Achata as páginas acumuladas num array só, removendo duplicatas (defensivo
   // caso o TMDB repita algum item entre páginas).
@@ -143,7 +206,19 @@ export function HomePage() {
     observer.observe(el);
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active.hasNextPage, active.isFetchingNextPage, active.fetchNextPage, category, activeQuery, providerMediaType, selectedProviders]);
+  }, [
+    active.hasNextPage,
+    active.isFetchingNextPage,
+    active.fetchNextPage,
+    category,
+    activeQuery,
+    providerMediaType,
+    selectedProviders,
+    filterMediaType,
+    selectedGenreIds,
+    filterYear,
+    filterMinRating,
+  ]);
 
   function handleSearchSubmit(e: FormEvent) {
     e.preventDefault();
@@ -277,7 +352,96 @@ export function HomePage() {
                   {t("home.streaming_clear")}
                 </button>
               )}
+              <button
+                onClick={() => setShowAdvancedFilter((v) => !v)}
+                className={`flex items-center gap-1 whitespace-nowrap px-3 py-1.5 rounded-full text-sm border ${
+                  hasAdvancedFilter ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                }`}
+              >
+                {t("home.filters_toggle")}
+              </button>
+              {hasAdvancedFilter && (
+                <button onClick={clearAdvancedFilter} className={btnDangerSmall}>
+                  {t("home.filters_clear")}
+                </button>
+              )}
             </div>
+
+            {showAdvancedFilter && (
+              <div className="rounded-lg border border-neutral-800 p-3 mb-3">
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setFilterMediaType("movie")}
+                    className={`px-3 py-1 rounded-md text-xs border ${
+                      filterMediaType === "movie" ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                    }`}
+                  >
+                    {t("home.streaming_movies")}
+                  </button>
+                  <button
+                    onClick={() => setFilterMediaType("tv")}
+                    className={`px-3 py-1 rounded-md text-xs border ${
+                      filterMediaType === "tv" ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                    }`}
+                  >
+                    {t("home.streaming_tv")}
+                  </button>
+                </div>
+
+                <div className="mb-3">
+                  <p className="text-xs text-neutral-500 mb-1">{t("home.filters_genre_heading")}</p>
+                  {genresQuery.isLoading && <p className="text-xs text-neutral-500">{t("home.filters_genre_loading")}</p>}
+                  {genresQuery.isError && <p className="text-xs text-red-400">{t("home.filters_genre_error")}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    {genresQuery.data?.map((g: GenreItem) => (
+                      <button
+                        key={g.id}
+                        onClick={() => toggleGenre(g.id)}
+                        className={`px-2 py-1 rounded-md text-xs border ${
+                          selectedGenreIds.includes(g.id) ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                        }`}
+                      >
+                        {g.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-4">
+                  <div>
+                    <p className="text-xs text-neutral-500 mb-1">{t("home.filters_year_heading")}</p>
+                    <select
+                      value={filterYear ?? ""}
+                      onChange={(e) => setFilterYear(e.target.value ? Number(e.target.value) : null)}
+                      className="rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs"
+                    >
+                      <option value="">{t("home.filters_year_any")}</option>
+                      {FILTER_YEARS.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-neutral-500 mb-1">{t("home.filters_rating_heading")}</p>
+                    <select
+                      value={filterMinRating ?? ""}
+                      onChange={(e) => setFilterMinRating(e.target.value ? Number(e.target.value) : null)}
+                      className="rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs"
+                    >
+                      <option value="">{t("home.filters_rating_any")}</option>
+                      {FILTER_MIN_RATINGS.map((n) => (
+                        <option key={n} value={n}>
+                          {n}+ ⭐
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {showStreamingFilter && (
               <div className="rounded-lg border border-neutral-800 p-3 mb-3">
@@ -323,7 +487,7 @@ export function HomePage() {
               </div>
             )}
 
-            {!hasProviderFilter && (
+            {!hasProviderFilter && !hasAdvancedFilter && (
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {DISCOVER_CATEGORIES.map((cat) => (
                   <button
@@ -342,7 +506,10 @@ export function HomePage() {
         )}
 
         {isSearching && <p className="text-sm text-neutral-400 mb-4">{t("home.search_results_for", { query: activeQuery })}</p>}
-        {!isSearching && hasProviderFilter && (
+        {!isSearching && hasAdvancedFilter && (
+          <p className="text-sm text-neutral-400 mb-4">{t("home.filtered_results")}</p>
+        )}
+        {!isSearching && !hasAdvancedFilter && hasProviderFilter && (
           <p className="text-sm text-neutral-400 mb-4">
             {t(providerMediaType === "movie" ? "home.provider_results_movie" : "home.provider_results_tv")}
           </p>

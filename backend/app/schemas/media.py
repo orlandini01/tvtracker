@@ -63,3 +63,12 @@ class WatchProviderCatalogItem(BaseModel):
 
 class WatchProviderCatalogResponse(BaseModel):
     results: list[WatchProviderCatalogItem]
+
+
+class GenreItem(BaseModel):
+    id: int
+    name: str
+
+
+class GenreListResponse(BaseModel):
+    results: list[GenreItem]

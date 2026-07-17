@@ -422,6 +422,54 @@ async def discover_by_genres(
     return result
 
 
+async def discover_filtered(
+    db: Session,
+    media_type: MediaType,
+    provider_ids: list[int] | None = None,
+    genre_ids: list[int] | None = None,
+    year: int | None = None,
+    min_rating: float | None = None,
+    region: str = "BR",
+    page: int = 1,
+) -> dict[str, Any]:
+    """Descoberta avançada: combina gênero, ano e nota mínima (e opcionalmente
+    provedor de streaming) numa única chamada a /discover/{tipo}. É um painel
+    à parte do filtro de streaming simples já existente — cobre o caso de
+    "filme de ação de 2020 com nota 7+", que as categorias fixas e o filtro
+    de streaming isolado não conseguem expressar."""
+    if media_type not in ("movie", "tv"):
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "media_type deve ser 'movie' ou 'tv'")
+    if not provider_ids and not genre_ids and year is None and min_rating is None:
+        raise TMDBError(status.HTTP_400_BAD_REQUEST, "Informe ao menos um filtro")
+
+    region = region.upper()
+    genre_key = ",".join(str(g) for g in sorted(genre_ids)) if genre_ids else ""
+    provider_key = ",".join(str(p) for p in sorted(provider_ids)) if provider_ids else ""
+    cache_key = f"discover_filtered:{media_type}:{region}:{genre_key}:{year}:{min_rating}:{provider_key}:{page}"
+    cached = _get_cached(db, cache_key, TTL_DISCOVER)
+    if cached is not None:
+        return cached
+
+    params: dict[str, Any] = {"page": page, "sort_by": "popularity.desc"}
+    if genre_ids:
+        params["with_genres"] = "|".join(str(g) for g in genre_ids)
+    if provider_ids:
+        params["with_watch_providers"] = "|".join(str(p) for p in provider_ids)
+        params["watch_region"] = region
+    if year is not None:
+        year_field = "primary_release_year" if media_type == "movie" else "first_air_date_year"
+        params[year_field] = year
+    if min_rating is not None:
+        params["vote_average.gte"] = min_rating
+
+    data = await _get(f"/discover/{media_type}", params)
+    results = [_map_summary(item, media_type) for item in data.get("results", [])]
+    result = {"page": data.get("page", 1), "total_pages": data.get("total_pages", 1), "results": results}
+
+    _set_cache(db, cache_key, result)
+    return result
+
+
 async def discover_by_providers(
     db: Session,
     media_type: MediaType,
