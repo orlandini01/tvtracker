@@ -24,6 +24,12 @@ export type SeasonSummary = {
   episode_count: number;
 };
 
+export type CastMember = {
+  name: string;
+  character: string;
+  profile_url: string | null;
+};
+
 export type MediaDetail = MediaSummary & {
   backdrop_url: string | null;
   genres: string[];
@@ -31,6 +37,8 @@ export type MediaDetail = MediaSummary & {
   number_of_seasons: number | null;
   status: string | null;
   seasons: SeasonSummary[] | null;
+  trailer_key: string | null;
+  cast: CastMember[];
 };
 
 export type WatchProvider = {

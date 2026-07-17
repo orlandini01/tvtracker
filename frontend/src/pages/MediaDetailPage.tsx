@@ -313,6 +313,43 @@ export function MediaDetailPage() {
 
           <p className="mt-4 leading-relaxed text-neutral-200">{media.overview || t("mediaDetail.no_synopsis")}</p>
 
+          {media.trailer_key && (
+            <div className="mt-6">
+              <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.trailer_heading")}</h2>
+              <div className="aspect-video w-full rounded-lg overflow-hidden border border-neutral-800">
+                <iframe
+                  src={`https://www.youtube.com/embed/${media.trailer_key}`}
+                  title={t("mediaDetail.trailer_heading")}
+                  className="w-full h-full"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          )}
+
+          {media.cast.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.cast_heading")}</h2>
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {media.cast.map((member, idx) => (
+                  <div key={`${member.name}-${idx}`} className="w-24 shrink-0 text-center">
+                    <div className="w-24 h-24 rounded-full overflow-hidden bg-neutral-800 border border-neutral-800">
+                      {member.profile_url ? (
+                        <img src={member.profile_url} alt={member.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-2xl text-neutral-600">👤</div>
+                      )}
+                    </div>
+                    <p className="text-xs mt-1 truncate" title={member.name}>{member.name}</p>
+                    <p className="text-xs text-neutral-500 truncate" title={member.character}>{member.character}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-6">
             <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.my_status")}</h2>
             <div className="flex flex-wrap gap-2">

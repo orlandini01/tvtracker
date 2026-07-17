@@ -205,7 +205,10 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
     if cached is not None:
         return cached
 
-    data = await _get(f"/{media_type}/{tmdb_id}")
+    # append_to_response busca trailer/elenco na MESMA chamada HTTP ao TMDB
+    # em vez de 2 requests extras — importante pra não adicionar latência
+    # visível na página de detalhe.
+    data = await _get(f"/{media_type}/{tmdb_id}", {"append_to_response": "videos,credits"})
     summary = _map_summary({**data, "id": data["id"]}, media_type)
 
     runtime = None
@@ -236,6 +239,16 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
                 "name": next_ep_raw.get("name"),
             }
 
+    trailer_key = _pick_trailer(data.get("videos", {}).get("results", []))
+    cast = [
+        {
+            "name": c.get("name", ""),
+            "character": c.get("character", ""),
+            "profile_url": _image_url(c.get("profile_path"), "https://image.tmdb.org/t/p/w185"),
+        }
+        for c in data.get("credits", {}).get("cast", [])[:10]
+    ]
+
     result = {
         **summary,
         "backdrop_url": _image_url(data.get("backdrop_path"), BACKDROP_BASE_URL),
@@ -245,10 +258,33 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
         "status": data.get("status"),
         "seasons": seasons,
         "next_episode_to_air": next_episode_to_air,
+        "trailer_key": trailer_key,
+        "cast": cast,
     }
 
     _set_cache(db, cache_key, result)
     return result
+
+
+def _pick_trailer(videos: list[dict[str, Any]]) -> str | None:
+    """Escolhe o melhor vídeo do YouTube pra embutir: trailer oficial >
+    qualquer trailer > teaser. Retorna a "key" do YouTube (usada na URL de
+    embed) ou None se não achar nada utilizável."""
+    def is_youtube(v: dict[str, Any], kind: str) -> bool:
+        return v.get("site") == "YouTube" and v.get("type") == kind
+
+    trailers = [v for v in videos if is_youtube(v, "Trailer")]
+    official_trailers = [v for v in trailers if v.get("official")]
+    if official_trailers:
+        return official_trailers[0]["key"]
+    if trailers:
+        return trailers[0]["key"]
+
+    teasers = [v for v in videos if is_youtube(v, "Teaser")]
+    if teasers:
+        return teasers[0]["key"]
+
+    return None
 
 
 async def get_season_episodes(db: Session, tmdb_id: int, season_number: int) -> list[dict[str, Any]]:

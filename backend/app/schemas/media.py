@@ -25,6 +25,12 @@ class SeasonSummary(BaseModel):
     episode_count: int
 
 
+class CastMember(BaseModel):
+    name: str
+    character: str
+    profile_url: str | None
+
+
 class MediaDetail(MediaSummary):
     backdrop_url: str | None
     genres: list[str]
@@ -32,6 +38,8 @@ class MediaDetail(MediaSummary):
     number_of_seasons: int | None
     status: str | None
     seasons: list[SeasonSummary] | None = None
+    trailer_key: str | None = None
+    cast: list[CastMember] = []
 
 
 class WatchProvider(BaseModel):

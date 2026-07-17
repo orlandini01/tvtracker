@@ -90,6 +90,8 @@
   "mediaDetail.type_movie": "Filme",
   "mediaDetail.type_tv": "Série",
   "mediaDetail.no_synopsis": "Sem sinopse disponível.",
+  "mediaDetail.trailer_heading": "Trailer",
+  "mediaDetail.cast_heading": "Elenco principal",
   "mediaDetail.my_status": "Meu status",
   "mediaDetail.my_rating": "Minha nota",
   "mediaDetail.rating_title": "Nota {{n}}",

@@ -90,6 +90,8 @@
   "mediaDetail.type_movie": "Film",
   "mediaDetail.type_tv": "Serie TV",
   "mediaDetail.no_synopsis": "Nessuna trama disponibile.",
+  "mediaDetail.trailer_heading": "Trailer",
+  "mediaDetail.cast_heading": "Cast principale",
   "mediaDetail.my_status": "Il mio stato",
   "mediaDetail.my_rating": "Il mio voto",
   "mediaDetail.rating_title": "Voto {{n}}",

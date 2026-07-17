@@ -90,6 +90,8 @@
   "mediaDetail.type_movie": "Movie",
   "mediaDetail.type_tv": "TV Show",
   "mediaDetail.no_synopsis": "No synopsis available.",
+  "mediaDetail.trailer_heading": "Trailer",
+  "mediaDetail.cast_heading": "Main cast",
   "mediaDetail.my_status": "My status",
   "mediaDetail.my_rating": "My rating",
   "mediaDetail.rating_title": "Rating {{n}}",
