@@ -3,28 +3,90 @@ import { Link } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
-import { getFeed, type Activity } from "../lib/feed";
+import { getFeed, type Activity, type ActivityAction } from "../lib/feed";
 import { STATUS_LABEL_KEYS, type WatchStatus } from "../lib/library";
+import { Avatar } from "../components/Avatar";
 import { EmptyState } from "../components/EmptyState";
 import { SkeletonRows } from "../components/Skeleton";
 import { btnSecondary } from "../lib/buttonStyles";
+import { formatRelativeTime } from "../lib/relativeTime";
 
-function describeActivity(t: TFunction, activity: Activity): string {
-  const who = activity.user.username;
+// Ícone de destaque por tipo de atividade — reforça de relance o que
+// aconteceu antes mesmo de ler o texto (igual qualquer feed social de
+// verdade usa cor/ícone além de texto).
+const ACTION_ICON: Record<ActivityAction, string> = {
+  favorited: "❤️",
+  status_changed: "🔄",
+  rated: "⭐",
+  commented: "💬",
+};
+
+function verbFor(t: TFunction, activity: Activity): string {
   switch (activity.action) {
     case "favorited":
-      return t("feed.activity_favorited", { who });
+      return t("feed.verb_favorited");
     case "status_changed": {
       const label = activity.detail ? t(STATUS_LABEL_KEYS[activity.detail as WatchStatus]) : activity.detail;
-      return t("feed.activity_status_changed", { who, label });
+      return t("feed.verb_status_changed", { label });
     }
     case "rated":
-      return t("feed.activity_rated", { who, rating: activity.detail });
+      return t("feed.verb_rated");
     case "commented":
-      return t("feed.activity_commented", { who });
+      return t("feed.verb_commented");
     default:
-      return t("feed.activity_default", { who });
+      return t("feed.verb_default");
   }
+}
+
+function ActivityCard({ activity, t }: { activity: Activity; t: TFunction }) {
+  const mediaLink = `/media/${activity.media.media_type}/${activity.media.tmdb_id}`;
+
+  return (
+    <li className="rounded-xl border border-neutral-800 hover:border-neutral-700 bg-neutral-900/30 transition-colors p-4">
+      <div className="flex items-start gap-3">
+        <Avatar username={activity.user.username} />
+
+        <div className="flex-1 min-w-0">
+          <p className="text-sm leading-snug">
+            <span className="font-semibold text-neutral-100">{activity.user.username}</span>{" "}
+            <span className="text-neutral-400">{verbFor(t, activity)}</span>
+            <span className="ml-1.5">{ACTION_ICON[activity.action]}</span>
+          </p>
+          <p className="text-xs text-neutral-500 mt-0.5">{formatRelativeTime(activity.created_at)}</p>
+
+          <Link
+            to={mediaLink}
+            className="mt-3 flex items-center gap-3 rounded-lg bg-neutral-900/70 hover:bg-neutral-800 p-2 transition-colors"
+          >
+            <div className="relative w-12 h-18 rounded overflow-hidden bg-neutral-800 shrink-0">
+              {activity.media.poster_url && (
+                <img src={activity.media.poster_url} alt={activity.media.title} className="w-full h-full object-cover" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="font-medium text-purple-400 truncate">{activity.media.title}</p>
+              {activity.action === "rated" && activity.detail && (
+                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-950 text-yellow-400">
+                  ⭐ {activity.detail}
+                </span>
+              )}
+              {activity.action === "status_changed" && activity.detail && (
+                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-950 text-purple-400">
+                  {t(STATUS_LABEL_KEYS[activity.detail as WatchStatus])}
+                </span>
+              )}
+            </div>
+          </Link>
+
+          {activity.action === "commented" && activity.detail && (
+            <div className="mt-2 rounded-lg bg-neutral-900/70 border-l-2 border-purple-700 px-3 py-2 text-sm text-neutral-300 italic">
+              "{activity.detail}"
+            </div>
+          )}
+        </div>
+      </div>
+    </li>
+  );
 }
 
 export function FeedPage() {
@@ -74,24 +136,7 @@ export function FeedPage() {
           <>
             <ul className="flex flex-col gap-3 fade-in">
               {activities.map((activity) => (
-                <li key={activity.id} className="flex items-center gap-3 rounded-lg border border-neutral-800 p-3">
-                  <Link to={`/media/${activity.media.media_type}/${activity.media.tmdb_id}`} className="shrink-0 w-12 h-18 rounded overflow-hidden bg-neutral-800">
-                    {activity.media.poster_url ? (
-                      <img src={activity.media.poster_url} alt={activity.media.title} className="w-full h-full object-cover" />
-                    ) : null}
-                  </Link>
-                  <div className="text-sm">
-                    <p>
-                      <span className="text-neutral-300">{describeActivity(t, activity)}</span>{" "}
-                      <Link to={`/media/${activity.media.media_type}/${activity.media.tmdb_id}`} className="font-medium text-purple-400 hover:underline">
-                        {activity.media.title}
-                      </Link>
-                    </p>
-                    {activity.action === "commented" && activity.detail && (
-                      <p className="text-neutral-500 italic mt-1">"{activity.detail}"</p>
-                    )}
-                  </div>
-                </li>
+                <ActivityCard key={activity.id} activity={activity} t={t} />
               ))}
             </ul>
 
