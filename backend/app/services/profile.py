@@ -43,9 +43,11 @@ def _profile_out(db: Session, user: User, is_self: bool) -> dict:
         "id": user.id,
         "username": user.username,
         "bio": user.bio,
+        "avatar_url": user.avatar_url,
         "created_at": user.created_at,
         "is_self": is_self,
         "stats": get_profile_stats(db, user.id),
+        "email_notifications_enabled": user.email_notifications_enabled if is_self else None,
     }
 
 
@@ -78,6 +80,13 @@ def get_friend_profile(db: Session, viewer_id, target_user_id) -> dict:
 
 def update_bio(db: Session, user: User, bio: str | None) -> User:
     user.bio = bio
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_email_notifications(db: Session, user: User, enabled: bool) -> User:
+    user.email_notifications_enabled = enabled
     db.commit()
     db.refresh(user)
     return user

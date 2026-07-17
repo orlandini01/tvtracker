@@ -16,6 +16,7 @@ from app.models.watched_episode import WatchedEpisode
 from app.models.notification import Notification
 from app.models.custom_list import CustomList
 from app.models.custom_list_item import CustomListItem
+from app.models.password_reset_token import PasswordResetToken
 
 config = context.config
 if config.config_file_name is not None:

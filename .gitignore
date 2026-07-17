@@ -22,3 +22,6 @@ Thumbs.db
 
 # Alembic
 backend/alembic/versions/__pycache__/
+
+# Avatares enviados pelos usuários - nunca versionar (dado do usuário, não código)
+backend/uploads/

@@ -11,11 +11,13 @@ class FriendUserOut(BaseModel):
 
     id: str
     username: str
+    avatar_url: str | None = None
 
 
 class UserSearchResult(BaseModel):
     id: str
     username: str
+    avatar_url: str | None = None
     relationship_status: RelationshipStatus
 
 

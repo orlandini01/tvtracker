@@ -5,7 +5,7 @@ export type ActivityAction = "favorited" | "status_changed" | "rated" | "comment
 
 export type Activity = {
   id: string;
-  user: { id: string; username: string };
+  user: { id: string; username: string; avatar_url: string | null };
   media: {
     tmdb_id: number;
     media_type: MediaType;

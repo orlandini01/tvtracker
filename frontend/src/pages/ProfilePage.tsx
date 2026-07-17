@@ -1,10 +1,18 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
 import { useAuth } from "../context/AuthContext";
-import { changePassword, getMyProfile, updateBio, updateUsername } from "../lib/profile";
+import {
+  changePassword,
+  getMyProfile,
+  removeAvatar,
+  updateBio,
+  updateEmailNotifications,
+  updateUsername,
+  uploadAvatar,
+} from "../lib/profile";
 import { getAchievements } from "../lib/achievements";
 import { ACHIEVEMENT_META } from "../lib/achievementsMeta";
 import { Avatar } from "../components/Avatar";
@@ -39,6 +47,8 @@ export function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const profileQuery = useQuery({ queryKey: ["my-profile"], queryFn: getMyProfile });
   const achievementsQuery = useQuery({ queryKey: ["achievements"], queryFn: getAchievements });
@@ -78,6 +88,39 @@ export function ProfilePage() {
       setPasswordError(err?.response?.data?.detail ?? t("profile.password_error"));
     },
   });
+
+  const avatarMutation = useMutation({
+    mutationFn: (file: File) => uploadAvatar(file),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["my-profile"], data);
+      setAvatarError(null);
+    },
+    onError: (err: any) => {
+      setAvatarError(err?.response?.data?.detail ?? t("profile.avatar_error"));
+    },
+  });
+
+  const removeAvatarMutation = useMutation({
+    mutationFn: () => removeAvatar(),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["my-profile"], data);
+      setAvatarError(null);
+    },
+  });
+
+  const emailNotificationsMutation = useMutation({
+    mutationFn: (enabled: boolean) => updateEmailNotifications(enabled),
+    onSuccess: (data) => {
+      queryClient.setQueryData(["my-profile"], data);
+    },
+  });
+
+  function handleAvatarChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    avatarMutation.mutate(file);
+  }
 
   function startEditingBio() {
     setBioInput(profileQuery.data?.bio ?? "");
@@ -130,7 +173,38 @@ export function ProfilePage() {
         {profile && (
           <div className="fade-in flex flex-col gap-6">
             <div className="flex flex-col items-center gap-3 text-center">
-              <Avatar username={profile.username} size="lg" />
+              <div className="relative group">
+                <Avatar username={profile.username} avatarUrl={profile.avatar_url} size="lg" />
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={avatarMutation.isPending}
+                  title={t("profile.avatar_change")}
+                  className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-neutral-800 border border-neutral-700 flex items-center justify-center text-sm hover:bg-neutral-700 disabled:opacity-50"
+                >
+                  📷
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </div>
+
+              {avatarMutation.isPending && <p className="text-xs text-neutral-500">{t("profile.avatar_uploading")}</p>}
+              {avatarError && <p className="text-xs text-red-400">{avatarError}</p>}
+              {profile.avatar_url && !avatarMutation.isPending && (
+                <button
+                  type="button"
+                  onClick={() => removeAvatarMutation.mutate()}
+                  disabled={removeAvatarMutation.isPending}
+                  className="text-xs text-neutral-500 hover:text-red-400"
+                >
+                  {t("profile.avatar_remove")}
+                </button>
+              )}
 
               {editingUsername ? (
                 <form onSubmit={handleUsernameSubmit} className="flex flex-col items-center gap-2 w-full max-w-xs">
@@ -229,6 +303,27 @@ export function ProfilePage() {
               <Link to="/wrapped" className={btnSecondary + " self-start"}>
                 {t("profile.wrapped_link")}
               </Link>
+
+              <label className="flex items-center justify-between gap-3 max-w-xs cursor-pointer">
+                <span className="text-sm text-neutral-300">{t("profile.email_notifications_label")}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={profile.email_notifications_enabled ?? false}
+                  disabled={emailNotificationsMutation.isPending}
+                  onClick={() => emailNotificationsMutation.mutate(!(profile.email_notifications_enabled ?? false))}
+                  className={`relative w-10 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50 ${
+                    profile.email_notifications_enabled ? "bg-purple-600" : "bg-neutral-700"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                      profile.email_notifications_enabled ? "translate-x-4" : ""
+                    }`}
+                  />
+                </button>
+              </label>
+              <p className="text-xs text-neutral-500 -mt-2">{t("profile.email_notifications_hint")}</p>
 
               {!showPasswordForm && (
                 <button onClick={() => setShowPasswordForm(true)} className={btnSecondarySmall + " self-start"}>

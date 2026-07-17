@@ -66,7 +66,7 @@ export function FriendProfilePage() {
         {profile && (
           <div className="fade-in flex flex-col gap-6">
             <div className="flex flex-col items-center gap-3 text-center">
-              <Avatar username={profile.username} size="lg" />
+              <Avatar username={profile.username} avatarUrl={profile.avatar_url} size="lg" />
               <h2 className="text-xl font-semibold">{profile.username}</h2>
               <p className="text-xs text-neutral-500">{t("profile.member_since", { date: formatMemberSince(profile.created_at) })}</p>
               <p className="text-sm text-neutral-400 max-w-sm">

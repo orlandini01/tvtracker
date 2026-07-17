@@ -1,11 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.api.auth import limiter
 from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.profile import ChangePassword, ProfileOut, ShareStatusResponse, UpdateBio, UpdateUsername
+from app.schemas.profile import (
+    ChangePassword,
+    ProfileOut,
+    ShareStatusResponse,
+    UpdateBio,
+    UpdateEmailNotifications,
+    UpdateUsername,
+)
+from app.services import avatar as avatar_service
 from app.services import profile as profile_service
+from app.services.avatar import AvatarError
 from app.services.profile import ProfileError
 
 router = APIRouter(prefix="/profile", tags=["profile"], dependencies=[Depends(get_current_user)])
@@ -66,6 +76,16 @@ def update_my_username(
     return profile_service.get_own_profile(db, current_user)
 
 
+@router.patch("/me/email-notifications", response_model=ProfileOut)
+def update_my_email_notifications(
+    payload: UpdateEmailNotifications,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile_service.update_email_notifications(db, current_user, payload.enabled)
+    return profile_service.get_own_profile(db, current_user)
+
+
 @router.post("/me/password", status_code=status.HTTP_204_NO_CONTENT)
 def change_my_password(
     payload: ChangePassword,
@@ -76,6 +96,30 @@ def change_my_password(
         profile_service.change_password(db, current_user, payload.current_password, payload.new_password)
     except ProfileError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/me/avatar", response_model=ProfileOut)
+@limiter.limit("10/minute")
+async def upload_my_avatar(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        await avatar_service.save_avatar(db, current_user, file)
+    except AvatarError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return profile_service.get_own_profile(db, current_user)
+
+
+@router.delete("/me/avatar", response_model=ProfileOut)
+def delete_my_avatar(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    avatar_service.remove_avatar(db, current_user)
+    return profile_service.get_own_profile(db, current_user)
 
 
 @router.get("/{user_id}", response_model=ProfileOut)

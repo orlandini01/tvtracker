@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, DateTime
+from sqlalchemy import Boolean, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -28,6 +28,15 @@ class User(Base):
     # nenhum dado sensível, então não precisa de validação além do tamanho
     # máximo (já garantido no schema Pydantic).
     bio: Mapped[str | None] = mapped_column(String(280), nullable=True)
+    # Caminho relativo do avatar customizado enviado pelo usuário (ex.:
+    # "avatars/<uuid>.jpg"), servido como arquivo estático. None = usa o
+    # avatar padrão (inicial colorida) no frontend. Nunca guardamos o
+    # caminho absoluto do disco, só o nome do arquivo dentro da pasta de
+    # uploads, resolvido pelo backend/frontend via URL fixa.
+    avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Opt-out de emails de "novo episódio disponível" (o sino in-app nunca
+    # é afetado por essa preferência — só o envio de email).
+    email_notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     def __repr__(self) -> str:

@@ -23,11 +23,15 @@ from app.services.friends import FriendError
 router = APIRouter(prefix="/friends", tags=["friends"], dependencies=[Depends(get_current_user)])
 
 
+def _friend_user_out(u: User) -> FriendUserOut:
+    return FriendUserOut(id=str(u.id), username=u.username, avatar_url=u.avatar_url)
+
+
 def _request_out(f) -> FriendRequestOut:
     return FriendRequestOut(
         id=str(f.id),
-        requester=FriendUserOut(id=str(f.requester.id), username=f.requester.username),
-        addressee=FriendUserOut(id=str(f.addressee.id), username=f.addressee.username),
+        requester=_friend_user_out(f.requester),
+        addressee=_friend_user_out(f.addressee),
         status=f.status,
         created_at=f.created_at,
     )
@@ -42,7 +46,7 @@ def search_users(
     matches = friends_service.search_users(db, current_user.id, q)
     return UserSearchResponse(
         results=[
-            UserSearchResult(id=str(u.id), username=u.username, relationship_status=rel)
+            UserSearchResult(id=str(u.id), username=u.username, avatar_url=u.avatar_url, relationship_status=rel)
             for u, rel in matches
         ]
     )
@@ -113,7 +117,7 @@ def list_friends(
     current_user: User = Depends(get_current_user),
 ):
     friends = friends_service.list_friends(db, current_user.id)
-    return FriendListResponse(results=[FriendUserOut(id=str(u.id), username=u.username) for u in friends])
+    return FriendListResponse(results=[_friend_user_out(u) for u in friends])
 
 
 @router.delete("/{friend_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -148,4 +152,4 @@ def compare_with_friend(
         result = compare_service.compare_users(db, current_user.id, fid)
     except FriendError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
-    return CompareResponse(friend=FriendUserOut(id=str(friend.id), username=friend.username), **result)
+    return CompareResponse(friend=_friend_user_out(friend), **result)

@@ -1,5 +1,9 @@
+from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -20,8 +24,26 @@ from app.api.recommendations import router as recommendations_router
 from app.api.routes import router as health_router
 from app.api.wrapped import router as wrapped_router
 from app.core.config import settings
+from app.services.scheduler import start_scheduler, stop_scheduler
 
-app = FastAPI(title="TrackerTV API", version="0.1.0", description="Backend do tracker de séries/filmes estilo TV Time.")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Job de checagem de novos episódios em lote (in-app + email) — não
+    # roda em testes (SessionLocal/engine de teste não deve ganhar um
+    # scheduler de fundo brigando pela conexão), então cada teste que sobe
+    # o app via TestClient simplesmente nunca chama isso de verdade.
+    start_scheduler()
+    yield
+    stop_scheduler()
+
+
+app = FastAPI(
+    title="TrackerTV API",
+    version="0.1.0",
+    description="Backend do tracker de séries/filmes estilo TV Time.",
+    lifespan=lifespan,
+)
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -50,3 +72,10 @@ app.include_router(calendar_router)
 app.include_router(profile_router)
 app.include_router(public_router)
 app.include_router(achievements_router)
+
+# Avatares customizados: servidos como arquivos estáticos direto do disco
+# do servidor. O diretório fica fora do controle de versão (.gitignore) e é
+# criado automaticamente se ainda não existir.
+_uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
+_uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(_uploads_dir)), name="uploads")

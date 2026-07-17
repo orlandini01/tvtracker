@@ -1,7 +1,9 @@
-// Avatar "de iniciais" — sem upload de foto de perfil no app, então cada
-// usuário ganha um círculo colorido (cor estável, derivada do username) com
-// a primeira letra do nome. Dá uma cara de rede social de verdade pro feed
-// sem precisar de armazenamento de imagem nenhum.
+import { API_BASE_URL } from "../lib/api";
+
+// Avatar: se o usuário tiver enviado uma foto customizada (avatarUrl), mostra
+// a imagem de verdade; senão cai no círculo colorido com a inicial do nome
+// (cor estável, derivada do username) — assim o app funciona bem mesmo pra
+// quem nunca fez upload de nada.
 const COLORS = [
   "bg-purple-600",
   "bg-pink-600",
@@ -27,8 +29,33 @@ const SIZE_CLASSES = {
   lg: "w-20 h-20 text-2xl",
 };
 
-export function Avatar({ username, size = "md" }: { username: string; size?: "sm" | "md" | "lg" }) {
+export function resolveAvatarSrc(avatarUrl: string | null | undefined): string | null {
+  if (!avatarUrl) return null;
+  return `${API_BASE_URL}${avatarUrl}`;
+}
+
+export function Avatar({
+  username,
+  avatarUrl,
+  size = "md",
+}: {
+  username: string;
+  avatarUrl?: string | null;
+  size?: "sm" | "md" | "lg";
+}) {
   const sizeClass = SIZE_CLASSES[size];
+  const src = resolveAvatarSrc(avatarUrl);
+
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={username}
+        className={`${sizeClass} rounded-full object-cover shrink-0 bg-neutral-800`}
+      />
+    );
+  }
+
   return (
     <div
       className={`${sizeClass} ${colorForUsername(username)} rounded-full flex items-center justify-center font-semibold text-white shrink-0`}

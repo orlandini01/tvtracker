@@ -14,6 +14,7 @@ import {
   type RelationshipStatus,
 } from "../lib/friends";
 import { btnDangerSmall, btnPrimary, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
+import { Avatar } from "../components/Avatar";
 import { EmptyState } from "../components/EmptyState";
 import { SkeletonRows } from "../components/Skeleton";
 
@@ -130,7 +131,10 @@ export function FriendsPage() {
           <ul className="flex flex-col gap-2 fade-in">
             {searchQuery.data?.map((u) => (
               <li key={u.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
-                <span className="text-sm">{u.username}</span>
+                <span className="flex items-center gap-2 text-sm">
+                  <Avatar username={u.username} avatarUrl={u.avatar_url} size="sm" />
+                  {u.username}
+                </span>
                 {u.relationship_status === "none" ? (
                   <button
                     onClick={() => sendMutation.mutate(u.username)}
@@ -156,7 +160,10 @@ export function FriendsPage() {
           <ul className="flex flex-col gap-2 fade-in">
             {incoming.map((req) => (
               <li key={req.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
-                <span className="text-sm">{req.requester.username}</span>
+                <span className="flex items-center gap-2 text-sm">
+                  <Avatar username={req.requester.username} avatarUrl={req.requester.avatar_url} size="sm" />
+                  {req.requester.username}
+                </span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => acceptMutation.mutate(req.id)}
@@ -187,7 +194,10 @@ export function FriendsPage() {
           <ul className="flex flex-col gap-2 fade-in">
             {outgoing.map((req) => (
               <li key={req.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
-                <span className="text-sm">{req.addressee.username}</span>
+                <span className="flex items-center gap-2 text-sm">
+                  <Avatar username={req.addressee.username} avatarUrl={req.addressee.avatar_url} size="sm" />
+                  {req.addressee.username}
+                </span>
                 <button
                   onClick={() => declineMutation.mutate(req.id)}
                   disabled={declineMutation.isPending}
@@ -209,7 +219,10 @@ export function FriendsPage() {
           <ul className="flex flex-col gap-2 fade-in">
             {friends.map((f) => (
               <li key={f.id} className="flex items-center justify-between rounded-md border border-neutral-800 px-3 py-2">
-                <Link to={`/perfil/${f.id}`} className="text-sm hover:text-purple-400">{f.username}</Link>
+                <Link to={`/perfil/${f.id}`} className="flex items-center gap-2 text-sm hover:text-purple-400">
+                  <Avatar username={f.username} avatarUrl={f.avatar_url} size="sm" />
+                  {f.username}
+                </Link>
                 <div className="flex gap-2">
                   <Link
                     to={`/amigos/${f.id}/comparar`}

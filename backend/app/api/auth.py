@@ -19,7 +19,10 @@ from app.core.security import (
 )
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.password_reset import ForgotPasswordRequest, ResetPasswordRequest
 from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserOut
+from app.services import password_reset as password_reset_service
+from app.services.password_reset import PasswordResetError
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 limiter = Limiter(key_func=get_remote_address)
@@ -114,3 +117,21 @@ def logout(response: Response):
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit("3/minute")
+def forgot_password(request: Request, payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    # Resposta sempre idêntica, exista ou não o email -- não dá pra usar
+    # esse endpoint pra descobrir quem tem conta no TrackerTV.
+    password_reset_service.request_reset(db, payload.email)
+    return {"detail": "Se esse email estiver cadastrado, enviamos um link de redefinição."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
+def reset_password(request: Request, payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    try:
+        password_reset_service.reset_password(db, payload.token, payload.new_password)
+    except PasswordResetError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

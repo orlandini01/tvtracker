@@ -3,6 +3,7 @@ import { AchievementsPage } from "./pages/AchievementsPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { ComparePage } from "./pages/ComparePage";
 import { FeedPage } from "./pages/FeedPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { FriendProfilePage } from "./pages/FriendProfilePage";
 import { FriendsPage } from "./pages/FriendsPage";
 import { HomePage } from "./pages/HomePage";
@@ -13,6 +14,7 @@ import { MediaDetailPage } from "./pages/MediaDetailPage";
 import { MyListPage } from "./pages/MyListPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { PublicWrappedPage } from "./pages/PublicWrappedPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { SignupPage } from "./pages/SignupPage";
 import { WrappedPage } from "./pages/WrappedPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -22,6 +24,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+      <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
       <Route path="/w/:token" element={<PublicWrappedPage />} />
       <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
       <Route path="/minha-lista" element={<ProtectedRoute><MyListPage /></ProtectedRoute>} />

@@ -5,12 +5,14 @@ export type RelationshipStatus = "none" | "friends" | "pending_outgoing" | "pend
 export type UserSearchResult = {
   id: string;
   username: string;
+  avatar_url: string | null;
   relationship_status: RelationshipStatus;
 };
 
 export type FriendUser = {
   id: string;
   username: string;
+  avatar_url: string | null;
 };
 
 export type FriendRequest = {

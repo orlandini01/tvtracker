@@ -30,7 +30,7 @@ def list_feed(db: Session, user_id, page: int = 1, page_size: int = 20) -> dict:
     results = [
         {
             "id": str(activity.id),
-            "user": {"id": str(user.id), "username": user.username},
+            "user": {"id": str(user.id), "username": user.username, "avatar_url": user.avatar_url},
             "media": {
                 "tmdb_id": media.tmdb_id,
                 "media_type": media.media_type,

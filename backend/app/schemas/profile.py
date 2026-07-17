@@ -24,13 +24,21 @@ class ProfileOut(BaseModel):
     id: uuid.UUID
     username: str
     bio: str | None
+    avatar_url: str | None
     created_at: datetime
     is_self: bool
     stats: ProfileStats
+    # Só preenchido quando is_self=True — é uma preferência pessoal, não faz
+    # sentido (nem é seguro) vazar isso no perfil visto por um amigo.
+    email_notifications_enabled: bool | None = None
 
 
 class UpdateBio(BaseModel):
     bio: str | None = Field(default=None, max_length=280)
+
+
+class UpdateEmailNotifications(BaseModel):
+    enabled: bool
 
 
 class UpdateUsername(BaseModel):

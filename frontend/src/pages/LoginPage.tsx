@@ -77,6 +77,10 @@ export function LoginPage() {
           />
         </label>
 
+        <Link to="/esqueci-senha" className="text-xs text-purple-400 hover:underline self-end -mt-2">
+          {t("auth.login.forgot_password")}
+        </Link>
+
         <button
           type="submit"
           disabled={isSubmitting}

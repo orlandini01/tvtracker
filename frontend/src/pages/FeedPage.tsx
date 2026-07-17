@@ -45,7 +45,7 @@ function ActivityCard({ activity, t }: { activity: Activity; t: TFunction }) {
     <li className="rounded-xl border border-neutral-800 hover:border-neutral-700 bg-neutral-900/30 transition-colors p-4">
       <div className="flex items-start gap-3">
         <Link to={`/perfil/${activity.user.id}`}>
-          <Avatar username={activity.user.username} />
+          <Avatar username={activity.user.username} avatarUrl={activity.user.avatar_url} />
         </Link>
 
         <div className="flex-1 min-w-0">

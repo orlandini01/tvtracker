@@ -18,9 +18,13 @@ export type Profile = {
   id: string;
   username: string;
   bio: string | null;
+  avatar_url: string | null;
   created_at: string;
   is_self: boolean;
   stats: ProfileStats;
+  // Só vem preenchido no próprio perfil (is_self=true) — nunca aparece no
+  // perfil visto por um amigo.
+  email_notifications_enabled: boolean | null;
 };
 
 export async function getMyProfile(): Promise<Profile> {
@@ -45,6 +49,25 @@ export async function updateUsername(username: string): Promise<Profile> {
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
   await api.post("/profile/me/password", { current_password: currentPassword, new_password: newPassword });
+}
+
+export async function updateEmailNotifications(enabled: boolean): Promise<Profile> {
+  const { data } = await api.patch<Profile>("/profile/me/email-notifications", { enabled });
+  return data;
+}
+
+export async function uploadAvatar(file: File): Promise<Profile> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<Profile>("/profile/me/avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
+export async function removeAvatar(): Promise<Profile> {
+  const { data } = await api.delete<Profile>("/profile/me/avatar");
+  return data;
 }
 
 export async function getShareStatus(): Promise<ShareStatus> {
