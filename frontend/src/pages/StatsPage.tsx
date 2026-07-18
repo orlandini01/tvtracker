@@ -68,6 +68,7 @@ export function StatsPage() {
               <StatCard value={stats.shows_watched} label={t("stats.shows_watched")} />
               <StatCard value={hours} label={t("stats.hours_watched")} />
               <StatCard value={stats.longest_streak_days} label={t("stats.longest_streak")} />
+              <StatCard value={stats.total_rewatches} label={t("stats.total_rewatches")} />
             </div>
 
             <section>

@@ -20,6 +20,8 @@ from app.models.password_reset_token import PasswordResetToken
 from app.models.custom_list_member import CustomListMember
 from app.models.push_subscription import PushSubscription
 from app.models.challenge import Challenge
+from app.models.watch_party import WatchParty
+from app.models.watch_party_invite import WatchPartyInvite
 
 config = context.config
 if config.config_file_name is not None:

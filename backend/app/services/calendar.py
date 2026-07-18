@@ -99,3 +99,64 @@ async def get_calendar(db: Session, user_id) -> list[dict]:
 
     items.sort(key=lambda i: i["date"])
     return items
+
+
+def _escape_ics(text: str) -> str:
+    """Escapa caracteres especiais de texto livre em campos ICS (RFC 5545
+    §3.3.11): barra invertida, ponto e vírgula, vírgula e quebra de linha."""
+    return text.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+def _fold_ics_line(line: str) -> str:
+    """RFC 5545 §3.1 exige quebrar linhas com mais de 75 octetos, com
+    continuação iniciando por um espaço. Aproximação por caracteres (não
+    por octeto UTF-8 exato) — suficiente pros títulos normais do TMDB e
+    aceito pelos principais clientes de calendário."""
+    if len(line) <= 75:
+        return line
+    parts = [line[:75]]
+    rest = line[75:]
+    while rest:
+        parts.append(" " + rest[:74])
+        rest = rest[74:]
+    return "\r\n".join(parts)
+
+
+async def export_ics(db: Session, user_id) -> str:
+    """Gera o conteúdo de um arquivo .ics com um VEVENT por lançamento
+    futuro rastreado (mesma fonte de dados do calendário na tela) — export
+    autenticado sob demanda, não uma URL "assinável" (isso exigiria um
+    esquema de token secreto separado, como o share_token do Wrapped)."""
+    items = await get_calendar(db, user_id)
+    now_stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//TrackerTV//Calendario de Lancamentos//PT",
+        "CALSCALE:GREGORIAN",
+    ]
+
+    for item in items:
+        dt = item["date"].replace("-", "")
+        uid = f"trackertv-{item['media_type']}-{item['tmdb_id']}-{item['date']}@trackertv"
+
+        if item["kind"] == "movie_release":
+            summary = f"Estreia: {item['title']}"
+        else:
+            ep_label = ""
+            if item.get("season_number") is not None and item.get("episode_number") is not None:
+                ep_label = f" T{item['season_number']}E{item['episode_number']}"
+            summary = f"{item['title']}{ep_label}"
+            if item.get("episode_name"):
+                summary += f" - {item['episode_name']}"
+
+        lines.append("BEGIN:VEVENT")
+        lines.append(f"UID:{uid}")
+        lines.append(f"DTSTAMP:{now_stamp}")
+        lines.append(f"DTSTART;VALUE=DATE:{dt}")
+        lines.append(f"SUMMARY:{_escape_ics(summary)}")
+        lines.append("END:VEVENT")
+
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(_fold_ics_line(line) for line in lines) + "\r\n"

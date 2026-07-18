@@ -19,6 +19,7 @@ const ACTION_ICON: Record<ActivityAction, string> = {
   status_changed: "🔄",
   rated: "⭐",
   commented: "💬",
+  rewatched: "🔁",
 };
 
 function verbFor(t: TFunction, activity: Activity): string {
@@ -33,6 +34,8 @@ function verbFor(t: TFunction, activity: Activity): string {
       return t("feed.verb_rated");
     case "commented":
       return t("feed.verb_commented");
+    case "rewatched":
+      return t("feed.verb_rewatched");
     default:
       return t("feed.verb_default");
   }

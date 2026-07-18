@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "../context/ThemeContext";
 
 // Menu "hambúrguer" com todos os links secundários da Home. Antes cada um
 // virava um botão solto no header — com 11 links isso quebrava feio no
@@ -24,6 +25,7 @@ const LINKS: NavLink[] = [
   { to: "/estatisticas", labelKey: "nav.stats", icon: "📊" },
   { to: "/roleta", labelKey: "nav.roulette", icon: "🎲" },
   { to: "/desafios", labelKey: "nav.challenges", icon: "🏆" },
+  { to: "/watch-parties", labelKey: "nav.watch_parties", icon: "🎉" },
   { to: "/conquistas", labelKey: "nav.achievements", icon: "🏅" },
   { to: "/calendario", labelKey: "nav.calendar", icon: "📅" },
   { to: "/wrapped", labelKey: "nav.wrapped", icon: "🎁" },
@@ -32,6 +34,7 @@ const LINKS: NavLink[] = [
 export function NavMenu() {
   const { t } = useTranslation();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -78,6 +81,15 @@ export function NavMenu() {
           <div
             className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-16 sm:top-full sm:mt-2 sm:w-64 sm:max-w-none max-w-none z-50 max-h-[70vh] overflow-y-auto rounded-lg border border-neutral-700 bg-neutral-900 shadow-xl py-2 fade-in"
           >
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="w-full flex items-center gap-3 px-4 py-3 sm:py-2.5 text-sm text-neutral-200 hover:bg-neutral-800 hover:text-purple-400 transition-colors border-b border-neutral-800 mb-1"
+            >
+              <span className="text-base w-5 text-center shrink-0">{theme === "dark" ? "☀️" : "🌙"}</span>
+              {theme === "dark" ? t("nav.theme_light") : t("nav.theme_dark")}
+            </button>
+
             {LINKS.map((link) => (
               <Link
                 key={link.to}

@@ -1,6 +1,15 @@
-// Service worker mínimo só pra receber push do navegador e mostrar a
-// notificação nativa do sistema — não faz cache de assets nem funciona
-// como PWA offline (isso é um projeto separado, não o objetivo aqui).
+// Service worker mínimo. Além de receber push (função original), também
+// é o que torna o app instalável como PWA — por isso agora é registrado
+// incondicionalmente (ver main.tsx), não só quando o usuário liga push.
+// O listener de "fetch" abaixo é só um passthrough (sem cache/offline de
+// verdade, que é um projeto à parte): existe porque alguns navegadores
+// ainda exigem um service worker com handler de fetch como critério de
+// instalabilidade.
+
+self.addEventListener("fetch", () => {
+  // Passthrough intencional — sem resposta customizada, o navegador
+  // segue com a requisição de rede normalmente.
+});
 
 self.addEventListener("push", (event) => {
   let payload = { title: "TrackerTV", body: "Você tem uma novidade.", url: "/" };

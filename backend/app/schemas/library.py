@@ -25,6 +25,7 @@ class LibraryEntryOut(BaseModel):
     is_favorite: bool
     rating: int | None
     watched_at: datetime | None
+    rewatch_count: int
     updated_at: datetime
 
 

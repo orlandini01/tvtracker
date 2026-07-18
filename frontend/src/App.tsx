@@ -20,6 +20,7 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { RoulettePage } from "./pages/RoulettePage";
 import { SignupPage } from "./pages/SignupPage";
 import { StatsPage } from "./pages/StatsPage";
+import { WatchPartiesPage } from "./pages/WatchPartiesPage";
 import { WrappedPage } from "./pages/WrappedPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 
@@ -45,6 +46,7 @@ function App() {
       <Route path="/estatisticas" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
       <Route path="/roleta" element={<ProtectedRoute><RoulettePage /></ProtectedRoute>} />
       <Route path="/desafios" element={<ProtectedRoute><ChallengesPage /></ProtectedRoute>} />
+      <Route path="/watch-parties" element={<ProtectedRoute><WatchPartiesPage /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/perfil/:userId" element={<ProtectedRoute><FriendProfilePage /></ProtectedRoute>} />
       <Route path="/media/:mediaType/:tmdbId" element={<ProtectedRoute><MediaDetailPage /></ProtectedRoute>} />

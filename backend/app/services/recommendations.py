@@ -35,6 +35,21 @@ RESULTS_LIMIT = 15
 
 FALLBACK_CATEGORY: dict[MediaType, str] = {"movie": "popular_movies", "tv": "popular_tv"}
 
+# IDs de gênero do TMDB (fixos e independentes de idioma — o nome que a API
+# devolve vem em pt-BR por causa do `language` fixo em tmdb.py, então
+# mapear por nome quebraria; por isso os IDs, bem conhecidos e estáveis,
+# vão direto aqui). TV e filme têm listas de gênero diferentes no TMDB
+# (ex.: TV não tem "Horror"/"Thriller" próprios — usamos o mais próximo
+# disponível, é uma aproximação deliberada).
+MOOD_GENRES: dict[str, dict[MediaType, list[int]]] = {
+    "feliz": {"movie": [35, 16, 10402], "tv": [35, 16]},  # comédia, animação, música
+    "triste": {"movie": [18, 10749], "tv": [18, 10766]},  # drama, romance / drama, novela
+    "emocionante": {"movie": [28, 12, 878], "tv": [10759, 10765]},  # ação, aventura, ficção / ação&aventura, ficção&fantasia
+    "assustador": {"movie": [27, 9648, 53], "tv": [9648, 80]},  # terror, mistério, suspense / mistério, crime
+    "relaxante": {"movie": [35, 10751, 16], "tv": [35, 10751, 16]},  # comédia, família, animação
+    "reflexivo": {"movie": [99, 36, 18], "tv": [99, 18]},  # documentário, história, drama / documentário, drama
+}
+
 
 def _tracked_tmdb_ids(db: Session, user_id, media_type: MediaType) -> set[int]:
     rows = (
@@ -111,5 +126,27 @@ async def get_recommendations(db: Session, user_id) -> dict:
     movies, shows = await asyncio.gather(
         _recommend_for_type(db, user_id, "movie"),
         _recommend_for_type(db, user_id, "tv"),
+    )
+    return {"movies": movies, "shows": shows}
+
+
+async def _mood_for_type(db: Session, user_id, media_type: MediaType, genre_ids: list[int]) -> list[dict]:
+    tracked = _tracked_tmdb_ids(db, user_id, media_type)
+    try:
+        data = await tmdb.discover_by_genres(db, media_type, genre_ids)
+    except TMDBError:
+        return []
+    results = [r for r in data.get("results", []) if r["tmdb_id"] not in tracked]
+    return results[:RESULTS_LIMIT]
+
+
+async def get_mood_recommendations(db: Session, user_id, mood: str) -> dict:
+    """Recomendações por humor — categorias fixas de gênero (ver
+    MOOD_GENRES), não personalizadas pelo histórico do usuário (só filtra
+    o que ele já rastreia, pra não repetir título que já está na lista)."""
+    genres = MOOD_GENRES[mood]
+    movies, shows = await asyncio.gather(
+        _mood_for_type(db, user_id, "movie", genres["movie"]),
+        _mood_for_type(db, user_id, "tv", genres["tv"]),
     )
     return {"movies": movies, "shows": shows}

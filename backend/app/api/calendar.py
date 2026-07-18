@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
@@ -17,3 +17,16 @@ async def get_calendar(
 ):
     results = await calendar_service.get_calendar(db, current_user.id)
     return {"results": results}
+
+
+@router.get("/export.ics")
+async def export_ics(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    content = await calendar_service.export_ics(db, current_user.id)
+    return Response(
+        content=content,
+        media_type="text/calendar",
+        headers={"Content-Disposition": "attachment; filename=trackertv-calendario.ics"},
+    )

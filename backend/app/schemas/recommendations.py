@@ -1,4 +1,11 @@
+from typing import Literal
+
 from pydantic import BaseModel
+
+# Categorias fixas de humor — cada uma mapeia pra um conjunto de gêneros
+# TMDB (ver MOOD_GENRES em services/recommendations.py). Fechado por
+# design: evita ter que lidar com humor livre/texto do usuário.
+Mood = Literal["feliz", "triste", "emocionante", "assustador", "relaxante", "reflexivo"]
 
 
 class RecommendationItem(BaseModel):

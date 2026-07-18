@@ -1,7 +1,7 @@
 import { api } from "./api";
 import type { MediaType } from "./media";
 
-export type ActivityAction = "favorited" | "status_changed" | "rated" | "commented";
+export type ActivityAction = "favorited" | "status_changed" | "rated" | "commented" | "rewatched";
 
 export type Activity = {
   id: string;

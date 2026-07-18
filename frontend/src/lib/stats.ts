@@ -10,6 +10,7 @@ export type AdvancedStats = {
   top_people: PersonCount[];
   movies_watched: number;
   shows_watched: number;
+  total_rewatches: number;
 };
 
 export async function getAdvancedStats(): Promise<AdvancedStats> {

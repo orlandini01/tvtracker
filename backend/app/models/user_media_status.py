@@ -28,6 +28,12 @@ class UserMediaStatus(Base):
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
     watched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Quantas vezes o usuário marcou "já assisti de novo" depois da primeira
+    # vez (filme só, por enquanto — série tem o conceito por episódio, que
+    # já é outro fluxo). watched_at sempre reflete a data do watch mais
+    # recente (primeira vez OU último rewatch), então o Diário automaticamente
+    # "sobe" o título de novo quando ele é reassistido.
+    rewatch_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)

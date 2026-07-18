@@ -16,10 +16,16 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.services.notifications import check_new_episodes_for_all_users
+from app.services.watch_party import check_watch_party_reminders
 
 logger = logging.getLogger("app.scheduler")
 
 scheduler = AsyncIOScheduler()
+
+# Janela de reminder é de 24h (ver REMINDER_WINDOW_HOURS em
+# services/watch_party.py) — checar de hora em hora dá granularidade de
+# sobra sem sobrecarregar o TMDB/banco.
+WATCH_PARTY_CHECK_INTERVAL_HOURS = 1
 
 
 async def _run_episode_check_job() -> None:
@@ -39,6 +45,22 @@ async def _run_episode_check_job() -> None:
         db.close()
 
 
+async def _run_watch_party_reminder_job() -> None:
+    db = SessionLocal()
+    try:
+        result = await check_watch_party_reminders(db)
+        logger.info(
+            "Checagem de lembretes de watch party concluída — %d party(ies), %d email(s) e %d push(es) enviados.",
+            result["parties_notified"],
+            result["emails_sent"],
+            result["pushes_sent"],
+        )
+    except Exception:
+        logger.exception("Falha na checagem periódica de lembretes de watch party.")
+    finally:
+        db.close()
+
+
 def start_scheduler() -> None:
     if scheduler.running:
         return
@@ -48,6 +70,13 @@ def start_scheduler() -> None:
         hours=settings.episode_check_interval_hours,
         id="episode_check",
         next_run_time=None,  # não roda imediatamente ao subir; espera o primeiro intervalo
+    )
+    scheduler.add_job(
+        _run_watch_party_reminder_job,
+        "interval",
+        hours=WATCH_PARTY_CHECK_INTERVAL_HOURS,
+        id="watch_party_reminder",
+        next_run_time=None,
     )
     scheduler.start()
 

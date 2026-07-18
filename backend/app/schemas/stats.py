@@ -18,3 +18,4 @@ class AdvancedStatsOut(BaseModel):
     top_people: list[PersonCount]
     movies_watched: int
     shows_watched: int
+    total_rewatches: int

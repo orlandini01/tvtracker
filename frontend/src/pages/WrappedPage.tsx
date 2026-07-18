@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getWrapped } from "../lib/wrapped";
 import { activateShare, deactivateShare, getShareStatus, rotateShare } from "../lib/profile";
+import { generateWrappedShareCard, shareOrDownloadCard } from "../lib/shareCard";
+import { useAuth } from "../context/AuthContext";
 import { EmptyState } from "../components/EmptyState";
 import { SkeletonBlock } from "../components/Skeleton";
 import { btnDangerSmall, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
@@ -85,7 +87,10 @@ function ShareWrappedPanel() {
 
 export function WrappedPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [year, setYear] = useState(CURRENT_YEAR);
+  const [generatingCard, setGeneratingCard] = useState(false);
+  const [cardError, setCardError] = useState(false);
 
   const query = useQuery({
     queryKey: ["wrapped", year],
@@ -94,6 +99,20 @@ export function WrappedPage() {
 
   const data = query.data;
   const hasActivity = data && (data.total_movies > 0 || data.total_shows > 0);
+
+  async function handleShareCard() {
+    if (!data || !user) return;
+    setCardError(false);
+    setGeneratingCard(true);
+    try {
+      const blob = await generateWrappedShareCard(data, user.username);
+      await shareOrDownloadCard(blob, `trackertv-wrapped-${year}.png`, t("wrapped.share_card_text", { year }));
+    } catch {
+      setCardError(true);
+    } finally {
+      setGeneratingCard(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -159,6 +178,13 @@ export function WrappedPage() {
               {data.hours_change_pct === null && (
                 <p className="text-sm text-neutral-500 mt-3">{t("wrapped.no_comparison_data", { year: year - 1 })}</p>
               )}
+            </div>
+
+            <div className="flex flex-col items-center mb-6 -mt-2">
+              <button onClick={handleShareCard} disabled={generatingCard} className={btnPrimarySmall}>
+                {generatingCard ? t("wrapped.share_card_generating") : t("wrapped.share_card_button")}
+              </button>
+              {cardError && <p className="text-xs text-red-400 mt-2">{t("wrapped.share_card_error")}</p>}
             </div>
 
             <div className="grid grid-cols-3 gap-4 mb-6">

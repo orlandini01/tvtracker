@@ -17,7 +17,7 @@ class ActivityOut(BaseModel):
     id: str
     user: FriendUserOut
     media: ActivityMedia
-    action: Literal["favorited", "status_changed", "rated", "commented"]
+    action: Literal["favorited", "status_changed", "rated", "commented", "rewatched"]
     detail: str | None
     created_at: datetime
 

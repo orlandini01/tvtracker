@@ -2,7 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Aplica o tema salvo ANTES do primeiro paint (bloqueante, de propósito)
+         — sem isso, o ThemeProvider só adicionaria a classe "light" depois
+         que o React monta, causando um flash do tema escuro (padrão) pra
+         quem escolheu o claro. -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem("trackertv-theme") === "light") {
+            document.documentElement.classList.add("light");
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#863bff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

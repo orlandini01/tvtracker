@@ -21,6 +21,7 @@ export type LibraryEntry = {
   is_favorite: boolean;
   rating: number | null;
   watched_at: string | null;
+  rewatch_count: number;
   updated_at: string;
 };
 
@@ -46,6 +47,11 @@ export async function upsertLibraryEntry(
 
 export async function deleteLibraryEntry(mediaType: MediaType, tmdbId: number): Promise<void> {
   await api.delete(`/library/${mediaType}/${tmdbId}`);
+}
+
+export async function markRewatch(mediaType: MediaType, tmdbId: number): Promise<LibraryEntry> {
+  const { data } = await api.post<LibraryEntry>(`/library/${mediaType}/${tmdbId}/rewatch`, {});
+  return data;
 }
 
 export async function listLibrary(filters?: {

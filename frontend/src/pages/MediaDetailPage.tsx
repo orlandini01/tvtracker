@@ -6,11 +6,14 @@ import { getMediaDetail, getWatchProviders, type MediaType } from "../lib/media"
 import {
   deleteLibraryEntry,
   getLibraryEntry,
+  markRewatch,
   upsertLibraryEntry,
   STATUS_LABEL_KEYS,
   type LibraryEntryUpdate,
   type WatchStatus,
 } from "../lib/library";
+import { listFriends } from "../lib/friends";
+import { createWatchParty } from "../lib/watchParty";
 import { deleteComment, getComments, postComment } from "../lib/comments";
 import {
   clearEpisodeRating,
@@ -158,6 +161,70 @@ export function MediaDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["library-list"] });
     },
   });
+
+  const rewatchMutation = useMutation({
+    mutationFn: () => markRewatch(type, id),
+    onSuccess: (updatedEntry) => {
+      queryClient.setQueryData(["library-entry", type, id], updatedEntry);
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+      queryClient.invalidateQueries({ queryKey: ["stats-advanced"] });
+    },
+  });
+
+  // Watch party: formulário simples, só carrega a lista de amigos quando
+  // o usuário de fato abre o formulário (evita um request a mais toda
+  // vez que a página de detalhe é aberta).
+  const [showPartyForm, setShowPartyForm] = useState(false);
+  const [partyDate, setPartyDate] = useState("");
+  const [partyNote, setPartyNote] = useState("");
+  const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
+  const [partyError, setPartyError] = useState<string | null>(null);
+  const [partySuccess, setPartySuccess] = useState(false);
+
+  const friendsQuery = useQuery({
+    queryKey: ["friends-list"],
+    queryFn: listFriends,
+    enabled: showPartyForm,
+  });
+
+  const createPartyMutation = useMutation({
+    mutationFn: () =>
+      createWatchParty({
+        media_type: type,
+        tmdb_id: id,
+        scheduled_at: new Date(partyDate).toISOString(),
+        note: partyNote.trim() || null,
+        invitee_usernames: [...selectedFriends],
+      }),
+    onSuccess: () => {
+      setPartyError(null);
+      setPartySuccess(true);
+      setPartyDate("");
+      setPartyNote("");
+      setSelectedFriends(new Set());
+      queryClient.invalidateQueries({ queryKey: ["watch-parties"] });
+      setTimeout(() => setPartySuccess(false), 3000);
+    },
+    onError: (err: any) => {
+      setPartyError(err?.response?.data?.detail ?? t("mediaDetail.watch_party_error"));
+    },
+  });
+
+  function toggleFriendSelection(username: string) {
+    setSelectedFriends((prev) => {
+      const next = new Set(prev);
+      if (next.has(username)) next.delete(username);
+      else next.add(username);
+      return next;
+    });
+  }
+
+  function handleCreateParty(e: FormEvent) {
+    e.preventDefault();
+    if (!partyDate) return;
+    setPartyError(null);
+    createPartyMutation.mutate();
+  }
 
   const [commentInput, setCommentInput] = useState("");
   const [commentSpoiler, setCommentSpoiler] = useState(false);
@@ -429,6 +496,23 @@ export function MediaDetailPage() {
             </div>
           </div>
 
+          {entry?.status === "assistido" && (
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                onClick={() => rewatchMutation.mutate()}
+                disabled={rewatchMutation.isPending}
+                className={btnAccentSmall}
+              >
+                🔁 {t("mediaDetail.rewatch_button")}
+              </button>
+              {entry.rewatch_count > 0 && (
+                <span className="text-xs text-neutral-500">
+                  {t("mediaDetail.rewatch_count", { count: entry.rewatch_count })}
+                </span>
+              )}
+            </div>
+          )}
+
           {hasAnyEntry && (
             <button
               onClick={() => deleteMutation.mutate()}
@@ -438,6 +522,80 @@ export function MediaDetailPage() {
               {t("mediaDetail.remove_from_list")}
             </button>
           )}
+
+          <div className="mt-6">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h2 className="text-sm font-medium text-neutral-400">{t("mediaDetail.watch_party_heading")}</h2>
+              <button onClick={() => setShowPartyForm((v) => !v)} className={btnSecondarySmall}>
+                {showPartyForm ? t("common.cancel") : t("mediaDetail.watch_party_create")}
+              </button>
+            </div>
+
+            {partySuccess && <p className="text-xs text-green-400 mb-2">{t("mediaDetail.watch_party_success")}</p>}
+
+            {showPartyForm && (
+              <form onSubmit={handleCreateParty} className="flex flex-col gap-3 rounded-lg border border-neutral-800 p-4">
+                <label className="flex flex-col gap-1 text-sm">
+                  {t("mediaDetail.watch_party_when")}
+                  <input
+                    type="datetime-local"
+                    value={partyDate}
+                    onChange={(e) => setPartyDate(e.target.value)}
+                    required
+                    className="rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
+                  />
+                </label>
+
+                <label className="flex flex-col gap-1 text-sm">
+                  {t("mediaDetail.watch_party_note")}
+                  <input
+                    type="text"
+                    value={partyNote}
+                    onChange={(e) => setPartyNote(e.target.value)}
+                    maxLength={280}
+                    placeholder={t("mediaDetail.watch_party_note_placeholder")}
+                    className="rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
+                  />
+                </label>
+
+                <div>
+                  <p className="text-sm mb-1">{t("mediaDetail.watch_party_invite")}</p>
+                  {friendsQuery.isLoading && <p className="text-xs text-neutral-500">{t("common.loading")}</p>}
+                  {friendsQuery.data && friendsQuery.data.length === 0 && (
+                    <p className="text-xs text-neutral-500">{t("mediaDetail.watch_party_no_friends")}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {friendsQuery.data?.map((friend) => (
+                      <label
+                        key={friend.id}
+                        className={`flex items-center gap-2 rounded-md border px-2 py-1 text-xs cursor-pointer ${
+                          selectedFriends.has(friend.username) ? "border-purple-500 bg-purple-950" : "border-neutral-700"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFriends.has(friend.username)}
+                          onChange={() => toggleFriendSelection(friend.username)}
+                          className="accent-purple-600"
+                        />
+                        {friend.username}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {partyError && <p className="text-xs text-red-400">{partyError}</p>}
+
+                <button
+                  type="submit"
+                  disabled={createPartyMutation.isPending || !partyDate}
+                  className={btnAccentSmall}
+                >
+                  {createPartyMutation.isPending ? t("common.loading") : t("mediaDetail.watch_party_submit")}
+                </button>
+              </form>
+            )}
+          </div>
 
           <div className="mt-6">
             <div className="flex items-center justify-between gap-2 mb-2">

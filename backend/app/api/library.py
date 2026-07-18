@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.schemas.library import LibraryEntryOut, LibraryEntryUpdate, LibraryListResponse
 from app.services import library as library_service
+from app.services.library import LibraryError
 from app.services.tmdb import TMDBError
 
 router = APIRouter(prefix="/library", tags=["library"], dependencies=[Depends(get_current_user)])
@@ -18,6 +19,8 @@ async def _call(coro):
         return await coro
     except TMDBError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message)
+    except LibraryError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @router.get("", response_model=LibraryListResponse)
@@ -51,6 +54,16 @@ async def upsert_status(
 ):
     update = payload.model_dump(exclude_unset=True)
     return await _call(library_service.upsert_status(db, current_user.id, media_type, tmdb_id, update))
+
+
+@router.post("/{media_type}/{tmdb_id}/rewatch", response_model=LibraryEntryOut)
+async def mark_rewatch(
+    media_type: Literal["movie", "tv"],
+    tmdb_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return await _call(library_service.mark_rewatch(db, current_user.id, media_type, tmdb_id))
 
 
 @router.delete("/{media_type}/{tmdb_id}", status_code=status.HTTP_204_NO_CONTENT)

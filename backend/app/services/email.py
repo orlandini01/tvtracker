@@ -55,6 +55,15 @@ def send_password_reset_email(to_email: str, reset_link: str) -> None:
     _send_email(to_email, subject, body)
 
 
+def send_watch_party_reminder_email(to_email: str, title: str, when_label: str) -> None:
+    subject = "Sua watch party está chegando — TrackerTV"
+    body = (
+        f'A watch party de "{title}" começa {when_label}.\n\n'
+        f"Combine os detalhes com quem confirmou presença e não esqueça de entrar no app na hora!"
+    )
+    _send_email(to_email, subject, body)
+
+
 def send_new_episodes_email(to_email: str, messages: list[str]) -> None:
     """Um único email por usuário, mesmo que várias séries tenham episódio
     novo na mesma checagem — evita inbox spam de vários emails picados."""

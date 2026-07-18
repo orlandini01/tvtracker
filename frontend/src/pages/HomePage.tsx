@@ -21,7 +21,7 @@ import {
   type MediaSummary,
   type MediaType,
 } from "../lib/media";
-import { getRecommendations } from "../lib/recommendations";
+import { getMoodRecommendations, getRecommendations, MOODS, type Mood } from "../lib/recommendations";
 import { btnDangerSmall, btnPrimary, btnSecondary } from "../lib/buttonStyles";
 
 const LANGUAGES = [
@@ -103,6 +103,14 @@ export function HomePage() {
   const recommendationsQuery = useQuery({
     queryKey: ["recommendations"],
     queryFn: getRecommendations,
+    staleTime: LIST_STALE_TIME,
+  });
+
+  const [selectedMood, setSelectedMood] = useState<Mood | null>(null);
+  const moodQuery = useQuery({
+    queryKey: ["mood-recommendations", selectedMood],
+    queryFn: () => getMoodRecommendations(selectedMood as Mood),
+    enabled: selectedMood !== null,
     staleTime: LIST_STALE_TIME,
   });
 
@@ -319,6 +327,53 @@ export function HomePage() {
                 <p className="text-xs text-neutral-500 mb-2">{t("home.recommended_shows")}</p>
                 <div className="flex gap-3 overflow-x-auto pb-1">
                   {recommendationsQuery.data.shows.map((item) => (
+                    <div key={`${item.media_type}-${item.tmdb_id}`} className="w-32 shrink-0">
+                      <MediaCard item={item} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {!isSearching && (
+          <section className="mb-8">
+            <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("home.mood_heading")}</h2>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {MOODS.map((mood) => (
+                <button
+                  key={mood}
+                  onClick={() => setSelectedMood((prev) => (prev === mood ? null : mood))}
+                  className={`px-3 py-1.5 rounded-full text-sm border ${
+                    selectedMood === mood ? "bg-purple-600 border-purple-500" : "border-neutral-700 hover:border-neutral-500"
+                  }`}
+                >
+                  {t(`home.mood_${mood}`)}
+                </button>
+              ))}
+            </div>
+
+            {selectedMood && moodQuery.isLoading && <p className="text-xs text-neutral-500">{t("home.mood_loading")}</p>}
+            {selectedMood && moodQuery.isError && <p className="text-xs text-red-400">{t("home.mood_error")}</p>}
+
+            {selectedMood && moodQuery.data?.movies && moodQuery.data.movies.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-neutral-500 mb-2">{t("home.recommended_movies")}</p>
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {moodQuery.data.movies.map((item) => (
+                    <div key={`${item.media_type}-${item.tmdb_id}`} className="w-32 shrink-0">
+                      <MediaCard item={item} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectedMood && moodQuery.data?.shows && moodQuery.data.shows.length > 0 && (
+              <div>
+                <p className="text-xs text-neutral-500 mb-2">{t("home.recommended_shows")}</p>
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {moodQuery.data.shows.map((item) => (
                     <div key={`${item.media_type}-${item.tmdb_id}`} className="w-32 shrink-0">
                       <MediaCard item={item} />
                     </div>

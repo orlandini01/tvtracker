@@ -21,6 +21,11 @@ from app.services import tmdb
 from app.services.tmdb import MediaType
 
 
+class LibraryError(Exception):
+    """Erro de regra de negócio (ex.: tentar marcar rewatch de um título
+    que o usuário nunca assistiu) — não é erro de banco/infra."""
+
+
 async def get_or_create_media(db: Session, media_type: MediaType, tmdb_id: int) -> Media:
     media = db.query(Media).filter_by(tmdb_id=tmdb_id, media_type=media_type).first()
     if media is not None:
@@ -54,6 +59,7 @@ def _to_out(media: Media, entry: UserMediaStatus | None) -> dict:
         "is_favorite": entry.is_favorite if entry else False,
         "rating": entry.rating if entry else None,
         "watched_at": entry.watched_at if entry else None,
+        "rewatch_count": entry.rewatch_count if entry else 0,
         "updated_at": entry.updated_at if entry else media.created_at,
     }
 
@@ -74,6 +80,7 @@ async def get_status(db: Session, user_id, media_type: MediaType, tmdb_id: int) 
             "is_favorite": False,
             "rating": None,
             "watched_at": None,
+            "rewatch_count": 0,
             "updated_at": datetime.now(timezone.utc),
         }
     entry = _get_entry(db, user_id, media.id)
@@ -108,6 +115,25 @@ async def upsert_status(db: Session, user_id, media_type: MediaType, tmdb_id: in
     if "rating" in update and update["rating"] is not None:
         _log_activity(db, user_id, media.id, "rated", str(update["rating"]))
 
+    db.commit()
+    db.refresh(entry)
+    return _to_out(media, entry)
+
+
+async def mark_rewatch(db: Session, user_id, media_type: MediaType, tmdb_id: int) -> dict:
+    """"Já assisti de novo" — só faz sentido pra um título que o usuário já
+    marcou como assistido antes (senão seria só a primeira vez, que já é
+    coberta por upsert_status). Atualiza watched_at pra agora (o Diário
+    passa a mostrar esse rewatch como o evento mais recente do título) e
+    incrementa o contador."""
+    media = await get_or_create_media(db, media_type, tmdb_id)
+    entry = _get_entry(db, user_id, media.id)
+    if entry is None or entry.status != "assistido":
+        raise LibraryError("Marque esse título como assistido antes de registrar um rewatch.")
+
+    entry.rewatch_count += 1
+    entry.watched_at = datetime.now(timezone.utc)
+    _log_activity(db, user_id, media.id, "rewatched", None)
     db.commit()
     db.refresh(entry)
     return _to_out(media, entry)

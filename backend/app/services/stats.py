@@ -119,6 +119,11 @@ async def get_advanced_stats(db: Session, user_id) -> dict:
                 person_counter[director] += episode_count
 
     streak = _longest_streak(_watch_dates(db, user_id))
+    total_rewatches = (
+        db.query(sa.func.coalesce(sa.func.sum(UserMediaStatus.rewatch_count), 0))
+        .filter(UserMediaStatus.user_id == user_id)
+        .scalar()
+    )
 
     return {
         "total_minutes_watched": total_minutes,
@@ -127,4 +132,5 @@ async def get_advanced_stats(db: Session, user_id) -> dict:
         "top_people": [{"name": name, "count": count} for name, count in person_counter.most_common(TOP_PEOPLE)],
         "movies_watched": len(movies),
         "shows_watched": len(shows),
+        "total_rewatches": int(total_rewatches or 0),
     }

@@ -7,6 +7,7 @@ import "./i18n";
 import "./index.css";
 import App from "./App.tsx";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,13 +23,29 @@ const queryClient = new QueryClient({
   },
 });
 
+// Registro incondicional do service worker — antes ele só era registrado
+// dentro de enablePush() (opt-in de notificação push). Pra o app ser
+// instalável como PWA, o navegador precisa ver um SW ativo mesmo pra
+// quem nunca ligou push; enablePush() continua reaproveitando o mesmo
+// registro (navigator.serviceWorker.register é idempotente).
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Instalação de PWA é um extra, não algo crítico — uma falha aqui
+      // (ex.: ambiente sem HTTPS em produção) não deve quebrar o app.
+    });
+  });
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
