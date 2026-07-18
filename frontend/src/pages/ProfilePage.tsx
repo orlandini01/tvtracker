@@ -35,7 +35,7 @@ function StatCard({ value, label }: { value: number; label: string }) {
 
 export function ProfilePage() {
   const { t } = useTranslation();
-  const { updateUsername: syncCachedUsername } = useAuth();
+  const { updateUsername: syncCachedUsername, updateAvatar: syncCachedAvatar } = useAuth();
   const queryClient = useQueryClient();
 
   const [editingBio, setEditingBio] = useState(false);
@@ -103,6 +103,7 @@ export function ProfilePage() {
     mutationFn: (file: File) => uploadAvatar(file),
     onSuccess: (data) => {
       queryClient.setQueryData(["my-profile"], data);
+      syncCachedAvatar(data.avatar_url);
       setAvatarError(null);
     },
     onError: (err: any) => {
@@ -114,6 +115,7 @@ export function ProfilePage() {
     mutationFn: () => removeAvatar(),
     onSuccess: (data) => {
       queryClient.setQueryData(["my-profile"], data);
+      syncCachedAvatar(data.avatar_url);
       setAvatarError(null);
     },
   });

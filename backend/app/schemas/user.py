@@ -35,6 +35,7 @@ class UserOut(BaseModel):
     username: str
     preferred_language: str
     bio: str | None = None
+    avatar_url: str | None = None
     created_at: datetime
 
 

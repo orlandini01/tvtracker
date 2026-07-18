@@ -12,6 +12,7 @@ export type User = {
   email: string;
   username: string;
   preferred_language: string;
+  avatar_url: string | null;
   created_at: string;
 };
 
@@ -22,6 +23,7 @@ type AuthContextType = {
   signup: (email: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUsername: (username: string) => void;
+  updateAvatar: (avatarUrl: string | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,8 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((prev) => (prev ? { ...prev, username } : prev));
   }
 
+  // Mesma ideia pro avatar — sem isso, trocar/remover o avatar em /perfil
+  // só atualizaria o cache do React Query daquela página, deixando o
+  // avatar velho no header até um F5.
+  function updateAvatar(avatarUrl: string | null) {
+    setUser((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : prev));
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateUsername }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateUsername, updateAvatar }}>
       {children}
     </AuthContext.Provider>
   );

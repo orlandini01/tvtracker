@@ -3,8 +3,10 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Avatar } from "../components/Avatar";
 import { EmptyState } from "../components/EmptyState";
 import { MediaCard } from "../components/MediaCard";
+import { NavMenu } from "../components/NavMenu";
 import { NotificationBell } from "../components/NotificationBell";
 import { SkeletonCardGrid } from "../components/Skeleton";
 import {
@@ -244,7 +246,7 @@ export function HomePage() {
       <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-neutral-800">
         <h1 className="text-2xl font-semibold">TrackerTV</h1>
 
-        <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md flex gap-2">
+        <form onSubmit={handleSearchSubmit} className="flex-1 min-w-0 basis-full sm:basis-auto sm:max-w-md flex gap-2">
           <input
             type="text"
             value={searchInput}
@@ -262,8 +264,8 @@ export function HomePage() {
           )}
         </form>
 
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden sm:flex gap-1">
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
@@ -277,49 +279,19 @@ export function HomePage() {
             ))}
           </div>
           <NotificationBell />
-          <Link to="/calendario" className={btnSecondary}>
-            {t("nav.calendar")}
-          </Link>
-          <Link to="/conquistas" className={btnSecondary}>
-            {t("nav.achievements")}
-          </Link>
-          <Link to="/desafios" className={btnSecondary}>
-            {t("nav.challenges")}
-          </Link>
-          <Link to="/estatisticas" className={btnSecondary}>
-            {t("nav.stats")}
-          </Link>
-          <Link to="/diario" className={btnSecondary}>
-            {t("nav.diary")}
-          </Link>
-          <Link to="/roleta" className={btnSecondary}>
-            {t("nav.roulette")}
-          </Link>
-          <Link to="/wrapped" className={btnSecondary}>
-            {t("nav.wrapped")}
-          </Link>
-          <Link to="/feed" className={btnSecondary}>
-            {t("nav.feed")}
-          </Link>
-          <Link to="/amigos" className={btnSecondary}>
-            {t("nav.friends")}
-          </Link>
-          <Link to="/minha-lista" className={btnSecondary}>
-            {t("nav.my_list")}
-          </Link>
-          <Link to="/listas" className={btnSecondary}>
-            {t("nav.custom_lists")}
-          </Link>
+          <NavMenu />
           {user && (
-            <Link to="/perfil" className="text-sm text-neutral-400 hover:text-purple-400 hidden sm:inline">
-              {user.username}
+            <Link to="/perfil" title={user.username} className="shrink-0">
+              <Avatar username={user.username} avatarUrl={user.avatar_url} size="sm" />
             </Link>
           )}
           <button
             onClick={() => logout()}
-            className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-3 py-1.5 text-sm font-medium transition-colors"
+            title={t("nav.logout")}
+            className="rounded-md border border-neutral-700 hover:border-red-500 hover:text-red-400 px-2 sm:px-3 py-1.5 text-sm font-medium transition-colors"
           >
-            {t("nav.logout")}
+            <span className="hidden sm:inline">{t("nav.logout")}</span>
+            <span className="sm:hidden">⏻</span>
           </button>
         </div>
       </header>
