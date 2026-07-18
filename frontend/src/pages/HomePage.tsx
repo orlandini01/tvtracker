@@ -283,6 +283,18 @@ export function HomePage() {
           <Link to="/conquistas" className={btnSecondary}>
             {t("nav.achievements")}
           </Link>
+          <Link to="/desafios" className={btnSecondary}>
+            {t("nav.challenges")}
+          </Link>
+          <Link to="/estatisticas" className={btnSecondary}>
+            {t("nav.stats")}
+          </Link>
+          <Link to="/diario" className={btnSecondary}>
+            {t("nav.diary")}
+          </Link>
+          <Link to="/roleta" className={btnSecondary}>
+            {t("nav.roulette")}
+          </Link>
           <Link to="/wrapped" className={btnSecondary}>
             {t("nav.wrapped")}
           </Link>

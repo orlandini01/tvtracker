@@ -10,7 +10,9 @@ from slowapi.errors import RateLimitExceeded
 from app.api.achievements import router as achievements_router
 from app.api.auth import limiter, router as auth_router
 from app.api.calendar import router as calendar_router
+from app.api.challenges import router as challenges_router
 from app.api.comments import router as comments_router
+from app.api.diary import router as diary_router
 from app.api.episodes import router as episodes_router
 from app.api.feed import router as feed_router
 from app.api.friends import router as friends_router
@@ -20,8 +22,11 @@ from app.api.media import router as media_router
 from app.api.notifications import router as notifications_router
 from app.api.profile import router as profile_router
 from app.api.public import router as public_router
+from app.api.push import router as push_router
 from app.api.recommendations import router as recommendations_router
+from app.api.roulette import router as roulette_router
 from app.api.routes import router as health_router
+from app.api.stats import router as stats_router
 from app.api.wrapped import router as wrapped_router
 from app.core.config import settings
 from app.services.scheduler import start_scheduler, stop_scheduler
@@ -72,6 +77,11 @@ app.include_router(calendar_router)
 app.include_router(profile_router)
 app.include_router(public_router)
 app.include_router(achievements_router)
+app.include_router(diary_router)
+app.include_router(stats_router)
+app.include_router(roulette_router)
+app.include_router(challenges_router)
+app.include_router(push_router)
 
 # Avatares customizados: servidos como arquivos estáticos direto do disco
 # do servidor. O diretório fica fora do controle de versão (.gitignore) e é

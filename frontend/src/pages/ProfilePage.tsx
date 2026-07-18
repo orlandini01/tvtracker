@@ -15,6 +15,7 @@ import {
 } from "../lib/profile";
 import { getAchievements } from "../lib/achievements";
 import { ACHIEVEMENT_META } from "../lib/achievementsMeta";
+import { disablePush, enablePush, getPushSubscriptionStatus, isPushSupported, PushError } from "../lib/push";
 import { Avatar } from "../components/Avatar";
 import { SkeletonBlock } from "../components/Skeleton";
 import { btnPrimary, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
@@ -49,9 +50,18 @@ export function ProfilePage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   const profileQuery = useQuery({ queryKey: ["my-profile"], queryFn: getMyProfile });
   const achievementsQuery = useQuery({ queryKey: ["achievements"], queryFn: getAchievements });
+  // Diferente do email (preferência guardada no servidor), o "ligado?" do
+  // push é lido direto do navegador — a existência de uma inscrição do
+  // Push API É o opt-in, não tem coluna de preferência pra isso.
+  const pushStatusQuery = useQuery({
+    queryKey: ["push-subscription-status"],
+    queryFn: getPushSubscriptionStatus,
+    enabled: isPushSupported(),
+  });
 
   const bioMutation = useMutation({
     mutationFn: (bio: string | null) => updateBio(bio),
@@ -112,6 +122,18 @@ export function ProfilePage() {
     mutationFn: (enabled: boolean) => updateEmailNotifications(enabled),
     onSuccess: (data) => {
       queryClient.setQueryData(["my-profile"], data);
+    },
+  });
+
+  const pushMutation = useMutation({
+    mutationFn: (enable: boolean) => (enable ? enablePush() : disablePush()),
+    onSuccess: () => {
+      setPushError(null);
+      queryClient.invalidateQueries({ queryKey: ["push-subscription-status"] });
+    },
+    onError: (err: any) => {
+      const reason = err instanceof PushError ? err.message : "generic";
+      setPushError(t(`profile.push_error_${reason}`, t("profile.push_error_generic")));
     },
   });
 
@@ -324,6 +346,32 @@ export function ProfilePage() {
                 </button>
               </label>
               <p className="text-xs text-neutral-500 -mt-2">{t("profile.email_notifications_hint")}</p>
+
+              {isPushSupported() && (
+                <>
+                  <label className="flex items-center justify-between gap-3 max-w-xs cursor-pointer">
+                    <span className="text-sm text-neutral-300">{t("profile.push_notifications_label")}</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={pushStatusQuery.data ?? false}
+                      disabled={pushMutation.isPending || pushStatusQuery.isLoading}
+                      onClick={() => pushMutation.mutate(!(pushStatusQuery.data ?? false))}
+                      className={`relative w-10 h-6 rounded-full transition-colors shrink-0 disabled:opacity-50 ${
+                        pushStatusQuery.data ? "bg-purple-600" : "bg-neutral-700"
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                          pushStatusQuery.data ? "translate-x-4" : ""
+                        }`}
+                      />
+                    </button>
+                  </label>
+                  <p className="text-xs text-neutral-500 -mt-2">{t("profile.push_notifications_hint")}</p>
+                  {pushError && <p className="text-xs text-red-400 -mt-2">{pushError}</p>}
+                </>
+              )}
 
               {!showPasswordForm && (
                 <button onClick={() => setShowPasswordForm(true)} className={btnSecondarySmall + " self-start"}>

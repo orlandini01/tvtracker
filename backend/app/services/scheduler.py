@@ -25,8 +25,12 @@ scheduler = AsyncIOScheduler()
 async def _run_episode_check_job() -> None:
     db = SessionLocal()
     try:
-        emails_sent = await check_new_episodes_for_all_users(db)
-        logger.info("Checagem de novos episódios concluída — %d email(s) enviado(s).", emails_sent)
+        result = await check_new_episodes_for_all_users(db)
+        logger.info(
+            "Checagem de novos episódios concluída — %d email(s) e %d push(es) enviados.",
+            result["emails_sent"],
+            result["pushes_sent"],
+        )
     except Exception:
         # Nunca deixa uma falha nessa checagem periódica derrubar o
         # scheduler inteiro (ele continuaria tentando na próxima janela).

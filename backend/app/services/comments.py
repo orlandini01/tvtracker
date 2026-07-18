@@ -18,17 +18,23 @@ def _to_out(comment: Comment, current_user_id) -> dict:
         "id": str(comment.id),
         "user": {"id": str(comment.user.id), "username": comment.user.username},
         "body": comment.body,
+        "contains_spoiler": comment.contains_spoiler,
         "created_at": comment.created_at,
         "updated_at": comment.updated_at,
         "is_mine": comment.user_id == current_user_id,
     }
 
 
-async def create_comment(db: Session, user_id, media_type: MediaType, tmdb_id: int, body: str) -> dict:
+async def create_comment(
+    db: Session, user_id, media_type: MediaType, tmdb_id: int, body: str, contains_spoiler: bool = False
+) -> dict:
     media = await get_or_create_media(db, media_type, tmdb_id)
-    comment = Comment(user_id=user_id, media_id=media.id, body=body.strip())
+    comment = Comment(user_id=user_id, media_id=media.id, body=body.strip(), contains_spoiler=contains_spoiler)
     db.add(comment)
-    _log_activity(db, user_id, media.id, "commented", body.strip()[:60])
+    # Nunca loga o texto de um comentário com spoiler no feed — só o fato
+    # de que a pessoa comentou, sem vazar o conteúdo em outro lugar.
+    activity_detail = "Comentário com spoiler" if contains_spoiler else body.strip()[:60]
+    _log_activity(db, user_id, media.id, "commented", activity_detail)
     db.commit()
     db.refresh(comment)
     _ = comment.user  # força carregar a relationship antes de montar o dict de saida

@@ -76,6 +76,29 @@ function ListMembershipRow({
   );
 }
 
+// Comentário com spoiler vem borrado, com o texto trocado por um aviso —
+// só o clique de quem está lendo revela o conteúdo de verdade. Uma vez
+// revelado, fica revelado (não borra de novo) até a página recarregar.
+function CommentBody({ body, containsSpoiler }: { body: string; containsSpoiler: boolean }) {
+  const { t } = useTranslation();
+  const [revealed, setRevealed] = useState(false);
+
+  if (!containsSpoiler || revealed) {
+    return <p className="text-sm text-neutral-200 mt-1">{body}</p>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setRevealed(true)}
+      className="mt-1 w-full text-left rounded-md bg-neutral-800/60 px-2 py-2"
+    >
+      <p className="text-sm text-neutral-200 blur-sm select-none">{body}</p>
+      <p className="text-xs text-amber-400 mt-1">{t("mediaDetail.comment_spoiler_reveal")}</p>
+    </button>
+  );
+}
+
 export function MediaDetailPage() {
   const { t } = useTranslation();
   const { mediaType, tmdbId } = useParams<{ mediaType: string; tmdbId: string }>();
@@ -137,6 +160,7 @@ export function MediaDetailPage() {
   });
 
   const [commentInput, setCommentInput] = useState("");
+  const [commentSpoiler, setCommentSpoiler] = useState(false);
 
   const commentsQuery = useQuery({
     queryKey: ["comments", type, id],
@@ -145,9 +169,10 @@ export function MediaDetailPage() {
   });
 
   const postCommentMutation = useMutation({
-    mutationFn: (body: string) => postComment(type, id, body),
+    mutationFn: ({ body, spoiler }: { body: string; spoiler: boolean }) => postComment(type, id, body, spoiler),
     onSuccess: () => {
       setCommentInput("");
+      setCommentSpoiler(false);
       queryClient.invalidateQueries({ queryKey: ["comments", type, id] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
     },
@@ -164,7 +189,7 @@ export function MediaDetailPage() {
     e.preventDefault();
     const trimmed = commentInput.trim();
     if (!trimmed) return;
-    postCommentMutation.mutate(trimmed);
+    postCommentMutation.mutate({ body: trimmed, spoiler: commentSpoiler });
   }
 
   const isTv = type === "tv";
@@ -547,22 +572,33 @@ export function MediaDetailPage() {
 
           <div className="mt-8">
             <h2 className="text-sm font-medium text-neutral-400 mb-2">{t("mediaDetail.comments")}</h2>
-            <form onSubmit={handleCommentSubmit} className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={commentInput}
-                onChange={(e) => setCommentInput(e.target.value)}
-                placeholder={t("mediaDetail.comment_placeholder")}
-                maxLength={1000}
-                className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
-              />
-              <button
-                type="submit"
-                disabled={postCommentMutation.isPending || !commentInput.trim()}
-                className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium"
-              >
-                {t("mediaDetail.comment_submit")}
-              </button>
+            <form onSubmit={handleCommentSubmit} className="flex flex-col gap-2 mb-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  placeholder={t("mediaDetail.comment_placeholder")}
+                  maxLength={1000}
+                  className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-2 text-sm outline-none focus:border-purple-500"
+                />
+                <button
+                  type="submit"
+                  disabled={postCommentMutation.isPending || !commentInput.trim()}
+                  className="rounded-md bg-purple-600 hover:bg-purple-500 px-4 py-2 text-sm font-medium"
+                >
+                  {t("mediaDetail.comment_submit")}
+                </button>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-neutral-400 cursor-pointer w-fit">
+                <input
+                  type="checkbox"
+                  checked={commentSpoiler}
+                  onChange={(e) => setCommentSpoiler(e.target.checked)}
+                  className="accent-purple-600"
+                />
+                {t("mediaDetail.comment_spoiler_checkbox")}
+              </label>
             </form>
 
             {commentsQuery.isLoading && <p className="text-sm text-neutral-500">{t("mediaDetail.comments_loading")}</p>}
@@ -586,7 +622,7 @@ export function MediaDetailPage() {
                       </button>
                     )}
                   </div>
-                  <p className="text-sm text-neutral-200 mt-1">{comment.body}</p>
+                  <CommentBody body={comment.body} containsSpoiler={comment.contains_spoiler} />
                 </li>
               ))}
             </ul>

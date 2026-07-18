@@ -17,6 +17,9 @@ from app.models.notification import Notification
 from app.models.custom_list import CustomList
 from app.models.custom_list_item import CustomListItem
 from app.models.password_reset_token import PasswordResetToken
+from app.models.custom_list_member import CustomListMember
+from app.models.push_subscription import PushSubscription
+from app.models.challenge import Challenge
 
 config = context.config
 if config.config_file_name is not None:

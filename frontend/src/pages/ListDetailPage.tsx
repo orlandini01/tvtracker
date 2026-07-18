@@ -2,9 +2,19 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { deleteList, getListDetail, removeListItem, renameList, type CustomListItem } from "../lib/lists";
+import { useAuth } from "../context/AuthContext";
+import {
+  addListMember,
+  deleteList,
+  getListDetail,
+  removeListItem,
+  removeListMember,
+  renameList,
+  type CustomListItem,
+} from "../lib/lists";
 import { EmptyState } from "../components/EmptyState";
 import { SkeletonRows } from "../components/Skeleton";
+import { Avatar } from "../components/Avatar";
 import { btnDangerSmall, btnPrimarySmall, btnSecondary, btnSecondarySmall } from "../lib/buttonStyles";
 
 // Client-side pois o detalhe da lista já vem inteiro num único request.
@@ -40,6 +50,7 @@ function sortItems(items: CustomListItem[], sort: SortValue): CustomListItem[] {
 
 export function ListDetailPage() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { listId } = useParams<{ listId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -47,6 +58,9 @@ export function ListDetailPage() {
   const [renaming, setRenaming] = useState(false);
   const [nameInput, setNameInput] = useState("");
   const [sort, setSort] = useState<SortValue>("added_desc");
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteUsername, setInviteUsername] = useState("");
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const detailQuery = useQuery({
     queryKey: ["custom-list", listId],
@@ -86,6 +100,32 @@ export function ListDetailPage() {
     onSuccess: invalidate,
   });
 
+  const inviteMutation = useMutation({
+    mutationFn: (username: string) => addListMember(listId as string, username),
+    onSuccess: () => {
+      setInviteUsername("");
+      setInviteError(null);
+      setShowInvite(false);
+      invalidate();
+    },
+    onError: (err: any) => {
+      setInviteError(err?.response?.data?.detail ?? t("lists.invite_error"));
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (memberId: string) => removeListMember(listId as string, memberId),
+    onSuccess: invalidate,
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: () => removeListMember(listId as string, user!.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["custom-lists"] });
+      navigate("/listas");
+    },
+  });
+
   function startRenaming() {
     setNameInput(detailQuery.data?.name ?? "");
     setRenaming(true);
@@ -102,6 +142,19 @@ export function ListDetailPage() {
     if (window.confirm(t("lists.delete_confirm"))) {
       deleteMutation.mutate();
     }
+  }
+
+  function handleLeave() {
+    if (window.confirm(t("lists.leave_confirm"))) {
+      leaveMutation.mutate();
+    }
+  }
+
+  function handleInviteSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = inviteUsername.trim();
+    if (!trimmed) return;
+    inviteMutation.mutate(trimmed);
   }
 
   if (detailQuery.isLoading) {
@@ -165,14 +218,22 @@ export function ListDetailPage() {
 
       <main className="px-6 py-6 max-w-2xl mx-auto">
         {!renaming && (
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex gap-2">
-              <button onClick={startRenaming} className={btnSecondarySmall}>
-                {t("lists.rename_button")}
-              </button>
-              <button onClick={handleDelete} disabled={deleteMutation.isPending} className={btnDangerSmall}>
-                {t("lists.delete_button")}
-              </button>
+              {list.is_owner ? (
+                <>
+                  <button onClick={startRenaming} className={btnSecondarySmall}>
+                    {t("lists.rename_button")}
+                  </button>
+                  <button onClick={handleDelete} disabled={deleteMutation.isPending} className={btnDangerSmall}>
+                    {t("lists.delete_button")}
+                  </button>
+                </>
+              ) : (
+                <button onClick={handleLeave} disabled={leaveMutation.isPending} className={btnDangerSmall}>
+                  {t("lists.leave_button")}
+                </button>
+              )}
             </div>
 
             {list.items.length > 0 && (
@@ -193,6 +254,62 @@ export function ListDetailPage() {
             )}
           </div>
         )}
+
+        <div className="mb-6 rounded-lg border border-neutral-800 p-3">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h2 className="text-xs font-medium text-neutral-400 uppercase tracking-wide">{t("lists.members_heading")}</h2>
+            {list.is_owner && !showInvite && (
+              <button onClick={() => setShowInvite(true)} className={btnSecondarySmall}>
+                {t("lists.invite_button")}
+              </button>
+            )}
+          </div>
+
+          {showInvite && (
+            <form onSubmit={handleInviteSubmit} className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={inviteUsername}
+                onChange={(e) => setInviteUsername(e.target.value)}
+                placeholder={t("lists.invite_placeholder")}
+                maxLength={50}
+                autoFocus
+                className="flex-1 rounded-md bg-neutral-900 border border-neutral-700 px-3 py-1.5 text-sm outline-none focus:border-purple-500"
+              />
+              <button type="submit" disabled={inviteMutation.isPending || !inviteUsername.trim()} className={btnPrimarySmall}>
+                {t("lists.invite_submit")}
+              </button>
+              <button type="button" onClick={() => setShowInvite(false)} className={btnSecondarySmall}>
+                {t("common.cancel")}
+              </button>
+            </form>
+          )}
+          {inviteError && <p className="text-sm text-red-400 mb-2">{inviteError}</p>}
+
+          <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2 rounded-full bg-neutral-900 pl-1 pr-3 py-1">
+              <Avatar username={list.owner.username} avatarUrl={list.owner.avatar_url} size="sm" />
+              <span className="text-sm">{list.owner.username}</span>
+              <span className="text-xs text-neutral-500">{t("lists.owner_badge")}</span>
+            </div>
+            {list.members.map((m) => (
+              <div key={m.id} className="flex items-center gap-2 rounded-full bg-neutral-900 pl-1 pr-2 py-1">
+                <Avatar username={m.username} avatarUrl={m.avatar_url} size="sm" />
+                <span className="text-sm">{m.username}</span>
+                {list.is_owner && (
+                  <button
+                    onClick={() => removeMemberMutation.mutate(m.id)}
+                    disabled={removeMemberMutation.isPending}
+                    className="text-neutral-500 hover:text-red-400 text-xs"
+                    title={t("lists.remove_member_title")}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
         {list.items.length === 0 && <EmptyState icon="📼" message={t("lists.detail_empty")} />}
 

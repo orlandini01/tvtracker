@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     # rápido" e "não fica batendo demais na API do TMDB".
     episode_check_interval_hours: int = 6
 
+    # Web Push (VAPID) pra notificação push do navegador. Chave pública vai
+    # pro frontend (não é segredo); a privada NUNCA pode ser exposta — gerar
+    # um par próprio com `python -m app.scripts.gen_vapid_keys` (ver README)
+    # em vez de usar qualquer valor de exemplo em produção.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_claims_email: str = "mailto:admin@trackertv.local"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

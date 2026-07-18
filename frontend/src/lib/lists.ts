@@ -6,6 +6,8 @@ export type CustomListSummary = {
   name: string;
   created_at: string;
   item_count: number;
+  is_owner: boolean;
+  member_count: number;
 };
 
 export type CustomListItem = {
@@ -17,11 +19,20 @@ export type CustomListItem = {
   rating: number | null;
 };
 
+export type ListMember = {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+};
+
 export type CustomListDetail = {
   id: string;
   name: string;
   created_at: string;
   items: CustomListItem[];
+  is_owner: boolean;
+  owner: ListMember;
+  members: ListMember[];
 };
 
 export async function getLists(): Promise<CustomListSummary[]> {
@@ -66,4 +77,16 @@ export async function getListMembership(mediaType: MediaType, tmdbId: number): P
     params: { media_type: mediaType, tmdb_id: tmdbId },
   });
   return data.list_ids;
+}
+
+// Convidar um amigo pra ser membro da lista (só o dono pode chamar isso).
+export async function addListMember(listId: string, username: string): Promise<CustomListDetail> {
+  const { data } = await api.post<CustomListDetail>(`/lists/${listId}/members`, { username });
+  return data;
+}
+
+// Remover um membro (dono removendo alguém) ou sair da lista (removendo
+// a si mesmo) — mesmo endpoint pros dois casos.
+export async function removeListMember(listId: string, userId: string): Promise<void> {
+  await api.delete(`/lists/${listId}/members/${userId}`);
 }

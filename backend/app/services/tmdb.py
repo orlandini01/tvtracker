@@ -248,6 +248,14 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
         }
         for c in data.get("credits", {}).get("cast", [])[:10]
     ]
+    # Diretor (filme) ou criador (série) — usado nas estatísticas avançadas
+    # de "quem mais aparece" nos títulos assistidos. Pra filme, o crew tem
+    # job="Director"; série não tem "diretor" único na API (é por episódio),
+    # então usamos os criadores listados no nível da série.
+    if media_type == "movie":
+        directors = [c["name"] for c in data.get("credits", {}).get("crew", []) if c.get("job") == "Director"]
+    else:
+        directors = [c.get("name", "") for c in data.get("created_by", [])]
 
     result = {
         **summary,
@@ -260,6 +268,7 @@ async def get_detail(db: Session, media_type: MediaType, tmdb_id: int) -> dict[s
         "next_episode_to_air": next_episode_to_air,
         "trailer_key": trailer_key,
         "cast": cast,
+        "directors": directors,
     }
 
     _set_cache(db, cache_key, result)

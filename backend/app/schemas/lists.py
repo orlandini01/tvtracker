@@ -21,11 +21,19 @@ class CustomListItemOut(BaseModel):
     rating: int | None = None
 
 
+class MemberOut(BaseModel):
+    id: str
+    username: str
+    avatar_url: str | None
+
+
 class CustomListOut(BaseModel):
     id: str
     name: str
     created_at: datetime
     item_count: int
+    is_owner: bool
+    member_count: int
 
 
 class CustomListDetailOut(BaseModel):
@@ -33,6 +41,9 @@ class CustomListDetailOut(BaseModel):
     name: str
     created_at: datetime
     items: list[CustomListItemOut]
+    is_owner: bool
+    owner: MemberOut
+    members: list[MemberOut]
 
 
 class CustomListsResponse(BaseModel):
@@ -46,3 +57,7 @@ class ListMembershipResponse(BaseModel):
 class AddListItem(BaseModel):
     media_type: Literal["movie", "tv"]
     tmdb_id: int
+
+
+class AddListMember(BaseModel):
+    username: str = Field(min_length=3, max_length=50)

@@ -28,6 +28,7 @@ from app.models.media import Media
 from app.models.notification import Notification
 from app.models.user import User
 from app.models.user_media_status import UserMediaStatus
+from app.services import push as push_service
 from app.services import tmdb
 from app.services.email import send_new_episodes_email
 from app.services.tmdb import TMDBError
@@ -112,13 +113,15 @@ def _shows_tracked_by_anyone(db: Session) -> list[Media]:
     )
 
 
-async def check_new_episodes_for_all_users(db: Session) -> int:
+async def check_new_episodes_for_all_users(db: Session) -> dict:
     """Checagem em lote: uma chamada TMDB por série (não por usuário), e
     notifica in-app TODO mundo que acompanha aquele título quando aumenta.
-    Acumula as mensagens por usuário e manda um único email resumido no
-    final (só pra quem tem email_notifications_enabled=True) — nunca um
-    email por série. Retorna quantos emails foram enviados (útil pra log)."""
-    pending_emails: dict = {}  # user_id -> list[str]
+    Acumula as mensagens por usuário e manda um único email resumido +
+    um único push resumido no final (nunca um por série) — email só pra
+    quem tem email_notifications_enabled=True, push só pra quem tem uma
+    inscrição salva (o opt-in de push é a própria inscrição existir).
+    Retorna {"emails_sent": N, "pushes_sent": M} (útil pra log)."""
+    pending_messages: dict = {}  # user_id -> list[str]
 
     for media in _shows_tracked_by_anyone(db):
         try:
@@ -147,22 +150,32 @@ async def check_new_episodes_for_all_users(db: Session) -> int:
                         message=message,
                     )
                 )
-                pending_emails.setdefault(tracker_id, []).append(message)
+                pending_messages.setdefault(tracker_id, []).append(message)
 
             media.known_episode_count = total_episodes
 
     db.commit()
 
     emails_sent = 0
-    if pending_emails:
-        users = db.query(User).filter(User.id.in_(pending_emails.keys())).all()
+    pushes_sent = 0
+    if pending_messages:
+        users = db.query(User).filter(User.id.in_(pending_messages.keys())).all()
         for user in users:
             if not user.email_notifications_enabled:
                 continue
-            send_new_episodes_email(user.email, pending_emails[user.id])
+            send_new_episodes_email(user.email, pending_messages[user.id])
             emails_sent += 1
 
-    return emails_sent
+        subscriptions = push_service.list_subscriptions_for_users(db, pending_messages.keys())
+        for subscription in subscriptions:
+            messages = pending_messages.get(subscription.user_id)
+            if not messages:
+                continue
+            body = "; ".join(messages)[:200]
+            if push_service.send_push(db, subscription, "Novos episódios disponíveis", body, url="/diario"):
+                pushes_sent += 1
+
+    return {"emails_sent": emails_sent, "pushes_sent": pushes_sent}
 
 
 def _to_out(notification: Notification, media: Media) -> dict:

@@ -7,6 +7,7 @@ from app.core.deps import get_current_user
 from app.db.session import get_db
 from app.schemas.lists import (
     AddListItem,
+    AddListMember,
     CustomListCreate,
     CustomListDetailOut,
     CustomListOut,
@@ -46,7 +47,14 @@ def create_list(
         custom_list = lists_service.create_list(db, current_user.id, payload.name)
     except ListError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return {"id": str(custom_list.id), "name": custom_list.name, "created_at": custom_list.created_at, "item_count": 0}
+    return {
+        "id": str(custom_list.id),
+        "name": custom_list.name,
+        "created_at": custom_list.created_at,
+        "item_count": 0,
+        "is_owner": True,
+        "member_count": 1,
+    }
 
 
 @router.get("/membership", response_model=ListMembershipResponse)
@@ -125,3 +133,31 @@ def remove_item(
         return lists_service.remove_item(db, current_user.id, list_id, media_type, tmdb_id)
     except ListError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/{list_id}/members", response_model=CustomListDetailOut)
+def add_member(
+    list_id: str,
+    payload: AddListMember,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    try:
+        return lists_service.add_member(db, current_user.id, list_id, payload.username)
+    except ListError as exc:
+        status_code = status.HTTP_404_NOT_FOUND if "não encontrad" in str(exc) else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
+@router.delete("/{list_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_member(
+    list_id: str,
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    try:
+        lists_service.remove_member(db, current_user.id, list_id, user_id)
+    except ListError as exc:
+        status_code = status.HTTP_404_NOT_FOUND if "não encontrad" in str(exc) else status.HTTP_403_FORBIDDEN
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
