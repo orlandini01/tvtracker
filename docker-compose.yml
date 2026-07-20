@@ -1,6 +1,5 @@
 # Sobe só o Postgres localmente. O backend roda direto via uvicorn
 # (fora do Docker) durante o desenvolvimento, para ter hot-reload rápido.
-# O Dockerfile do backend é usado no deploy (Railway/Render), não aqui.
 services:
   db:
     image: postgres:16-alpine

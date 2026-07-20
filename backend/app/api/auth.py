@@ -32,8 +32,8 @@ REFRESH_COOKIE_NAME = "refresh_token"
 
 def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
     is_production = settings.environment != "development"
-    # Em produção o frontend (Vercel) e o backend (Render) ficam em
-    # domínios diferentes — cookie "strict"/"lax" não seria enviado numa
+    # Em produção, se o frontend e o backend ficarem em domínios
+    # diferentes, cookie "strict"/"lax" não seria enviado numa
     # requisição cross-site, quebrando /auth/refresh (a sessão nunca
     # sobreviveria a um F5). "none" é obrigatório nesse cenário, e o
     # navegador só aceita "none" combinado com secure=True (por isso os
