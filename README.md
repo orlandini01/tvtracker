@@ -57,8 +57,9 @@ Requisito não-negociável do projeto desde o início:
   email e chaves VAPID só existem em variáveis de ambiente (`.env`,
   nunca commitado — ver `.gitignore`).
 - Validação de entrada — schemas Pydantic em todos os endpoints.
-- HTTPS em produção — cookies com `Secure`/`SameSite` ajustados pra
-  cross-domain (ver `DEPLOY.md`).
+- HTTPS em produção — cookies com `Secure`/`SameSite` já preparados
+  para funcionar corretamente em cenário cross-domain quando o app for
+  publicado.
 - CI (`.github/workflows/ci.yml`) roda `pip-audit` e `npm audit` a cada
   push pra flagar dependências vulneráveis.
 
